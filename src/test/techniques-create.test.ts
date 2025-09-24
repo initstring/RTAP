@@ -10,6 +10,7 @@ vi.mock("@/server/db", () => ({
     mitreTechnique: { findUnique: vi.fn() },
     mitreSubTechnique: { findUnique: vi.fn() },
     tool: { findMany: vi.fn() },
+    target: { findMany: vi.fn() },
   },
 }));
 
@@ -25,15 +26,15 @@ const createTechniqueData = {
   endTime: new Date("2024-01-01T11:00:00Z"),
   sourceIp: "192.168.1.100",
   targetSystem: "workstation-01",
-  crownJewelTargeted: true,
-  crownJewelCompromised: false,
   toolIds: ["tool-1"],
+  targetEngagements: [{ targetId: "target-1", status: "succeeded" }],
 };
 
 function mockCreateTechniqueDependencies() {
   mockDb.mitreTechnique.findUnique.mockResolvedValue({ id: "T1566", name: "Phishing" });
   mockDb.mitreSubTechnique.findUnique.mockResolvedValue({ id: "T1566.001", name: "Sub", techniqueId: "T1566" });
   mockDb.tool.findMany.mockResolvedValue([{ id: "tool-1", name: "Cobalt Strike" }]);
+  mockDb.target.findMany.mockResolvedValue([{ id: "target-1", name: "Target" }]);
   mockDb.technique.findFirst.mockResolvedValue(null);
   mockDb.technique.create.mockResolvedValue({ id: "technique-1" });
 }

@@ -196,6 +196,11 @@ interface OutcomeSeed {
   log?: string | null;
 }
 
+interface TechniqueTargetSeed {
+  name: string;
+  status?: "succeeded" | "failed" | "unknown";
+}
+
 interface TechniqueSeed {
   mitre: string;
   desc: string;
@@ -203,11 +208,10 @@ interface TechniqueSeed {
   end?: string;
   source?: string;
   target?: string;
-  crown?: boolean;
-  compromised?: boolean;
   tools: string[];
   outcome?: OutcomeSeed;
   executedSuccessfully?: boolean;
+  targets?: TechniqueTargetSeed[];
 }
 
 interface OperationSeed {
@@ -329,10 +333,11 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-02-12T15:30:00Z",
           source: "203.0.113.5",
           target: "PaymentServer1",
-          crown: true,
-          compromised: true,
           tools: ["Cobalt Strike"],
           executedSuccessfully: true,
+          targets: [
+            { name: "Payment Processing System", status: "succeeded" },
+          ],
           outcome: {
             type: OutcomeType.PREVENTION,
             status: OutcomeStatus.PREVENTED,
@@ -429,10 +434,11 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-05-07T16:20:00Z",
           source: "198.51.100.7",
           target: "PaymentServer1",
-          crown: true,
-          compromised: false,
           tools: ["Nmap"],
           executedSuccessfully: true,
+          targets: [
+            { name: "Payment Processing System", status: "failed" },
+          ],
           outcome: {
             type: OutcomeType.DETECTION,
             status: OutcomeStatus.DETECTED,
@@ -519,10 +525,11 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2024-11-13T15:10:00Z",
           source: "203.0.113.9",
           target: "RepoServer1",
-          crown: true,
-          compromised: true,
           tools: ["Nmap"],
           executedSuccessfully: true,
+          targets: [
+            { name: "Source Code Repository", status: "succeeded" },
+          ],
           outcome: {
             type: OutcomeType.DETECTION,
             status: OutcomeStatus.MISSED,
@@ -742,10 +749,11 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-07-04T14:10:00Z",
           source: "192.0.2.10",
           target: "DBServer1",
-          crown: true,
-          compromised: false,
           tools: ["Nmap"],
           executedSuccessfully: true,
+          targets: [
+            { name: "Customer Database", status: "failed" },
+          ],
           outcome: {
             type: OutcomeType.DETECTION,
             status: OutcomeStatus.DETECTED,
@@ -763,10 +771,11 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-07-04T15:30:00Z",
           source: "192.0.2.10",
           target: "HRServer",
-          crown: true,
-          compromised: true,
           tools: ["Metasploit"],
           executedSuccessfully: true,
+          targets: [
+            { name: "Employee Credentials", status: "succeeded" },
+          ],
           outcome: {
             type: OutcomeType.ATTRIBUTION,
             status: OutcomeStatus.ATTRIBUTED,
@@ -850,11 +859,20 @@ async function seedOperations(ctx: SeedCtx) {
             endTime: t.end ? new Date(t.end) : null,
             sourceIp: t.source,
             targetSystem: t.target,
-            crownJewelTargeted: Boolean(t.crown),
-            crownJewelCompromised: Boolean(t.compromised),
             mitreTechnique: { connect: { id: t.mitre } },
             tools: { connect: t.tools.map((n) => ({ id: tools[n] })) },
             executedSuccessfully: t.executedSuccessfully ?? undefined,
+            targetEngagements: t.targets && t.targets.length > 0
+              ? {
+                  create: t.targets.map((targetSeed) => ({
+                    target: { connect: { id: targets[targetSeed.name] } },
+                    wasSuccessful:
+                      targetSeed.status === undefined || targetSeed.status === "unknown"
+                        ? null
+                        : targetSeed.status === "succeeded",
+                  })),
+                }
+              : undefined,
             outcomes: t.outcome
               ? {
                   create: {

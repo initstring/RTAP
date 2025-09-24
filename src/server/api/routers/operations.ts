@@ -93,6 +93,11 @@ export const operationsRouter = createTRPCRouter({
                   logSources: true,
                 },
               },
+              targetEngagements: {
+                include: {
+                  target: true,
+                },
+              },
             },
             orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
           },
@@ -160,6 +165,9 @@ export const operationsRouter = createTRPCRouter({
               mitreTechnique: true,
               mitreSubTechnique: true,
               outcomes: true,
+              targetEngagements: {
+                include: { target: true },
+              },
             },
           },
         },

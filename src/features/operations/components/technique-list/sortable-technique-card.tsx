@@ -64,6 +64,13 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
   const detectionStatus = getStatusLabel(detectionOutcome, "DETECTION");
   const preventionStatus = getStatusLabel(preventionOutcome, "PREVENTION");
   const attributionStatus = getStatusLabel(attributionOutcome, "ATTRIBUTION");
+  const targetEngagements = technique.targetEngagements ?? [];
+
+  const targetBadgeVariant = (success: boolean | null | undefined) => {
+    if (success === true) return "error" as const;
+    if (success === false) return "success" as const;
+    return "outline" as const;
+  };
 
   return (
     <div ref={setNodeRef} style={style} className={`${isDragging ? "opacity-50" : ""}`}>
@@ -135,6 +142,33 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
                 </div>
               </div>
 
+              {targetEngagements.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {targetEngagements.map((engagement) => {
+                    const targetName = engagement.target?.name ?? "Unknown Target";
+                    const statusLabel =
+                      engagement.wasSuccessful === true
+                        ? "Compromised"
+                        : engagement.wasSuccessful === false
+                          ? "Not Compromised"
+                          : "Not Recorded";
+                    return (
+                      <Badge
+                        key={`${technique.id}-${engagement.targetId}`}
+                        variant={targetBadgeVariant(engagement.wasSuccessful)}
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        {engagement.target?.isCrownJewel && (
+                          <span className="uppercase tracking-wide text-[10px]">CJ</span>
+                        )}
+                        <span>{targetName}</span>
+                        <span className="opacity-80">{statusLabel}</span>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="flex items-center gap-4">
                 {detectionStatus !== "N/A" && (
                   <div className="flex items-center gap-1.5 text-xs">
@@ -181,13 +215,7 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
                   </div>
                 )}
 
-                <div className="ml-auto flex items-center gap-2">
-                  {technique.crownJewelTargeted && (
-                    <Badge variant={technique.crownJewelCompromised ? "error" : "secondary"} className="text-xs">
-                      {technique.crownJewelCompromised ? "Crown Jewel Compromised" : "Crown Jewel Targeted"}
-                    </Badge>
-                  )}
-                </div>
+                <div className="ml-auto flex items-center gap-2" />
               </div>
             </div>
           </div>

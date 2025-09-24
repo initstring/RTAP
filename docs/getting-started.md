@@ -53,7 +53,7 @@ This guide walks through the first workflow after you launch the application. Fo
   - Use the Tactic/Technique pickers to choose from the catalog
   - Fill in an optional description
 - Execution tab:
-  - Timing, execution details, offensive tooling, and target selection (with crown jewel access tracking)
+  - Timing, execution details, offensive tooling, and target selection with per-target outcome tracking (mark whether each chosen asset was compromised)
 - Outcomes tab:
   - Was the technique detected, prevented, or attributed later during IR?
   - What tooling and log sources were involved in successful outcomes or SHOULD HAVE BEEN involved in failed outcomes?

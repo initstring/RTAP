@@ -15,6 +15,11 @@ import { logger } from "@/lib/logger";
 import type { SelectedTechnique } from "@/features/operations/techniqueEditor.types";
 
 const OutcomeStateSchema = z.union([z.literal("yes"), z.literal("no"), z.literal("N/A")]);
+const TargetEngagementStatusSchema = z.union([
+  z.literal("unknown"),
+  z.literal("succeeded"),
+  z.literal("failed"),
+]);
 
 export const TechniqueEditorFormSchema = z.object({
   description: z.string().default(""),
@@ -23,8 +28,14 @@ export const TechniqueEditorFormSchema = z.object({
   sourceIp: z.string().optional(),
   targetSystems: z.string().optional(),
   offensiveToolIds: z.array(z.string()).default([]),
-  selectedTargetIds: z.array(z.string()).default([]),
-  crownJewelAccess: z.union([z.literal("yes"), z.literal("no"), z.literal("")]).default(""),
+  targetEngagements: z
+    .array(
+      z.object({
+        targetId: z.string(),
+        status: TargetEngagementStatusSchema,
+      }),
+    )
+    .default([]),
   executionSuccess: z.union([z.literal("yes"), z.literal("no"), z.literal("")]).default(""),
   outcomes: z.object({
     detection: z.object({ state: OutcomeStateSchema.default("N/A"), time: z.string().optional(), toolIds: z.array(z.string()).default([]) }),
@@ -78,11 +89,10 @@ export type TechniqueEditorFormValues = z.infer<typeof TechniqueEditorFormSchema
 export function useTechniqueEditorForm(params: {
   operationId: number;
   existingTechnique?: RouterOutputs["operations"]["getById"]["techniques"][number] & { executedSuccessfully: boolean | null };
-  targets?: RouterOutputs["operations"]["getById"]["targets"]; // hydration support
   onSuccess?: () => void;
   onClose: () => void;
 }) {
-  const { operationId, existingTechnique, targets, onSuccess, onClose } = params;
+  const { operationId, existingTechnique, onSuccess, onClose } = params;
 
   const defaultValues = useMemo<TechniqueEditorFormValues>(() => {
     const fmt = (d?: Date | string | null) => {
@@ -104,8 +114,7 @@ export function useTechniqueEditorForm(params: {
         sourceIp: "",
         targetSystems: "",
         offensiveToolIds: [],
-        selectedTargetIds: [],
-        crownJewelAccess: "",
+        targetEngagements: [],
         executionSuccess: "",
         outcomes: {
           detection: { state: "N/A", time: "", toolIds: [] },
@@ -119,8 +128,11 @@ export function useTechniqueEditorForm(params: {
     const prevention = existingTechnique.outcomes?.find((o) => o.type === "PREVENTION");
     const attribution = existingTechnique.outcomes?.find((o) => o.type === "ATTRIBUTION");
 
-    const crownJewelTargets = (targets ?? []).filter((target) => target.isCrownJewel).map((target) => target.id);
-    const selectedCJ = existingTechnique.crownJewelTargeted ? crownJewelTargets : [];
+    const engagementStatus = (value: boolean | null | undefined): "unknown" | "succeeded" | "failed" => {
+      if (value === true) return "succeeded";
+      if (value === false) return "failed";
+      return "unknown";
+    };
 
     return {
       description: existingTechnique.description ?? "",
@@ -129,8 +141,11 @@ export function useTechniqueEditorForm(params: {
       sourceIp: existingTechnique.sourceIp ?? "",
       targetSystems: existingTechnique.targetSystem ?? "",
       offensiveToolIds: existingTechnique.tools?.map((t) => t.id) ?? [],
-      selectedTargetIds: selectedCJ,
-      crownJewelAccess: existingTechnique.crownJewelCompromised ? "yes" : existingTechnique.crownJewelTargeted ? "no" : "",
+      targetEngagements:
+        existingTechnique.targetEngagements?.map((engagement) => ({
+          targetId: engagement.targetId,
+          status: engagementStatus(engagement.wasSuccessful),
+        })) ?? [],
       executionSuccess: existingTechnique.executedSuccessfully == null ? "" : existingTechnique.executedSuccessfully ? "yes" : "no",
       outcomes: {
         detection: {
@@ -149,7 +164,7 @@ export function useTechniqueEditorForm(params: {
         },
       },
     };
-  }, [existingTechnique, targets]);
+  }, [existingTechnique]);
 
   const form = useForm<TechniqueEditorFormValues>({
     defaultValues,
@@ -213,18 +228,19 @@ export function useTechniqueEditorForm(params: {
     if (!selected) return;
     const startTimeValue = values.startTime?.trim() ? new Date(values.startTime) : undefined;
     const endTimeValue = values.endTime?.trim() ? new Date(values.endTime) : undefined;
+    const targetEngagementsPayload = values.targetEngagements.map((engagement) => ({
+      targetId: engagement.targetId,
+      status: engagement.status,
+    }));
     const base = {
       mitreTechniqueId: selected.technique.id,
       mitreSubTechniqueId: selected.subTechnique?.id,
       description: values.description,
       sourceIp: values.sourceIp ?? undefined,
       targetSystem: values.targetSystems ?? undefined,
-      crownJewelTargeted: values.selectedTargetIds.some((id) =>
-        (targets ?? []).some((target) => target.isCrownJewel && target.id === id),
-      ),
-      crownJewelCompromised: values.crownJewelAccess === "yes",
       toolIds: values.offensiveToolIds,
       executedSuccessfully: values.executionSuccess === "" ? undefined : values.executionSuccess === "yes",
+      targetEngagements: targetEngagementsPayload,
     } as const;
 
     try {

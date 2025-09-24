@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { createTRPCRouter, protectedProcedure, viewerProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { checkOperationAccess, getAccessibleOperationFilter } from "@/server/api/access";
@@ -6,6 +7,11 @@ import { createTechniqueWithValidations } from "@/server/services/techniqueServi
 import { auditEvent, logger } from "@/server/logger";
 
 // Input validation schemas
+const targetEngagementSchema = z.object({
+  targetId: z.string(),
+  status: z.enum(["unknown", "succeeded", "failed"]),
+});
+
 const createTechniqueSchema = z.object({
   operationId: z.number(),
   description: z
@@ -19,10 +25,9 @@ const createTechniqueSchema = z.object({
   endTime: z.date().optional(),
   sourceIp: z.string().optional(),
   targetSystem: z.string().optional(),
-  crownJewelTargeted: z.boolean().default(false),
-  crownJewelCompromised: z.boolean().default(false),
   toolIds: z.array(z.string()).optional(),
   executedSuccessfully: z.boolean().optional(),
+  targetEngagements: z.array(targetEngagementSchema).default([]),
 });
 
 const updateTechniqueSchema = z.object({
@@ -35,10 +40,9 @@ const updateTechniqueSchema = z.object({
   endTime: z.date().nullable().optional(),
   sourceIp: z.string().optional(),
   targetSystem: z.string().optional(),
-  crownJewelTargeted: z.boolean().optional(),
-  crownJewelCompromised: z.boolean().optional(),
   toolIds: z.array(z.string()).optional(),
   executedSuccessfully: z.boolean().nullable().optional(),
+  targetEngagements: z.array(targetEngagementSchema).optional(),
 });
 
 const getTechniqueSchema = z.object({
@@ -66,8 +70,12 @@ export const techniquesRouter = createTRPCRouter({
         });
       }
 
-      const { toolIds, ...rest } = input;
-      const created = await createTechniqueWithValidations(ctx.db, { ...rest, toolIds });
+      const { toolIds, targetEngagements, ...rest } = input;
+      const created = await createTechniqueWithValidations(ctx.db, {
+        ...rest,
+        toolIds,
+        targetEngagements,
+      });
       logger.info(
         auditEvent(ctx, "sec.technique.create", {
           techniqueId: created.id,
@@ -85,7 +93,7 @@ export const techniquesRouter = createTRPCRouter({
   update: protectedProcedure
     .input(updateTechniqueSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, toolIds, ...updateData } = input;
+      const { id, toolIds, targetEngagements, ...updateData } = input;
 
       // Check if technique exists
       const existingTechnique = await ctx.db.technique.findUnique({
@@ -158,6 +166,20 @@ export const techniquesRouter = createTRPCRouter({
         }
       }
 
+      if (input.targetEngagements && input.targetEngagements.length > 0) {
+        const targetIds = input.targetEngagements.map((engagement) => engagement.targetId);
+        if (new Set(targetIds).size !== targetIds.length) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Duplicate targets are not allowed" });
+        }
+        const existingTargets = await ctx.db.target.findMany({
+          where: { id: { in: targetIds } },
+          select: { id: true },
+        });
+        if (existingTargets.length !== targetIds.length) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "One or more targets not found" });
+        }
+      }
+
       // Validate end time is not before start time
       if (input.startTime && input.endTime && input.endTime < input.startTime) {
         throw new TRPCError({
@@ -169,12 +191,38 @@ export const techniquesRouter = createTRPCRouter({
       // Prepare update data with relationship updates
       const updatePayload: typeof updateData & {
         tools?: { set: { id: string }[] };
+        targetEngagements?: Prisma.TechniqueTargetUpdateManyWithoutTechniqueNestedInput;
       } = { ...updateData };
 
       if (toolIds !== undefined) {
         updatePayload.tools = {
           set: toolIds.map((id) => ({ id })),
         };
+      }
+
+      if (targetEngagements !== undefined) {
+        const statusToValue = (status: "unknown" | "succeeded" | "failed") => {
+          if (status === "unknown") return null;
+          return status === "succeeded";
+        };
+
+        if (targetEngagements.length === 0) {
+          updatePayload.targetEngagements = { deleteMany: {} };
+        } else {
+          updatePayload.targetEngagements = {
+            deleteMany: {
+              targetId: { notIn: targetEngagements.map((engagement) => engagement.targetId) },
+            },
+            upsert: targetEngagements.map((engagement) => ({
+              where: { techniqueId_targetId: { techniqueId: id, targetId: engagement.targetId } },
+              update: { wasSuccessful: statusToValue(engagement.status) },
+              create: {
+                target: { connect: { id: engagement.targetId } },
+                wasSuccessful: statusToValue(engagement.status),
+              },
+            })),
+          };
+        }
       }
 
       const updated = await ctx.db.technique.update({
@@ -194,6 +242,9 @@ export const techniquesRouter = createTRPCRouter({
               tools: true,
               logSources: true,
             },
+          },
+          targetEngagements: {
+            include: { target: true },
           },
         },
       });

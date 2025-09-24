@@ -29,10 +29,9 @@ export interface ExecutionSectionProps {
 
   // Targets
   targets: Array<{ id: string; name: string; description: string; isCrownJewel?: boolean }> | undefined;
-  selectedTargetIds: string[];
+  selectedTargets: Array<{ id: string; name: string; isCrownJewel?: boolean; status: "unknown" | "succeeded" | "failed" }>;
   onTargetIdsChange: (ids: string[]) => void;
-  crownJewelAccess: string; // "yes" | "no" | ""
-  onCrownJewelAccessChange: (value: string) => void;
+  onTargetStatusChange: (targetId: string, status: "unknown" | "succeeded" | "failed") => void;
   executionSuccess: string; // "yes" | "no" | ""
   onExecutionSuccessChange: (value: string) => void;
 }
@@ -51,10 +50,9 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
     selectedOffensiveToolIds,
     onOffensiveToolIdsChange,
     targets,
-    selectedTargetIds,
+    selectedTargets,
     onTargetIdsChange,
-    crownJewelAccess,
-    onCrownJewelAccessChange,
+    onTargetStatusChange,
     executionSuccess,
     onExecutionSuccessChange,
   } = props;
@@ -137,7 +135,7 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
         <TaxonomySelector
           variant="targets"
           items={(targets ?? []).map((target) => ({ ...target }))}
-          selectedIds={selectedTargetIds}
+          selectedIds={selectedTargets.map((target) => target.id)}
           onSelectionChange={onTargetIdsChange}
           label="Targets"
           description="Select assets this technique targeted. Crown jewels are flagged with a CJ badge."
@@ -146,21 +144,49 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
           multiple={true}
         />
 
-        {selectedTargetIds.length > 0 && (
-          <div className="space-y-2 mt-4">
-            <Label htmlFor="crownJewelAccess">Successfully Accessed Crown Jewels</Label>
-            <div className="flex items-center gap-2">
-              {(["yes", "no"] as const).map(opt => {
-                const selected = crownJewelAccess === opt;
+        {selectedTargets.length > 0 && (
+          <div className="space-y-4 mt-4">
+            <Label>Target outcomes</Label>
+            <div className="space-y-3">
+              {selectedTargets.map((target) => {
+                const statusOptions: Array<{
+                  value: "succeeded" | "failed" | "unknown";
+                  label: string;
+                }> = [
+                  { value: "succeeded", label: "Compromised" },
+                  { value: "failed", label: "Not Compromised" },
+                  { value: "unknown", label: "Not Recorded" },
+                ];
+
                 return (
-                  <Badge
-                    key={opt}
-                    variant={selected ? "default" : "secondary"}
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => onCrownJewelAccessChange(selected ? "" : opt)}
+                  <div
+                    key={target.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--color-border)] p-3"
                   >
-                    {opt === "yes" ? "Yes" : "No"}
-                  </Badge>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{target.name}</span>
+                      {target.isCrownJewel && (
+                        <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                          CJ
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {statusOptions.map((option) => {
+                        const selected = target.status === option.value;
+                        return (
+                          <Badge
+                            key={option.value}
+                            variant={selected ? "default" : "secondary"}
+                            className="cursor-pointer hover:opacity-80"
+                            onClick={() => onTargetStatusChange(target.id, selected ? "unknown" : option.value)}
+                          >
+                            {option.label}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
             </div>

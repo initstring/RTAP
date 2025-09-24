@@ -19,10 +19,12 @@ export interface TechniqueCreateInput {
   endTime?: Date | null;
   sourceIp?: string;
   targetSystem?: string;
-  crownJewelTargeted?: boolean;
-  crownJewelCompromised?: boolean;
   executedSuccessfully?: boolean | null;
   toolIds?: string[];
+  targetEngagements?: Array<{
+    targetId: string;
+    status: "succeeded" | "failed" | "unknown";
+  }>;
 }
 
 export async function createTechniqueWithValidations(db: PrismaClient, input: TechniqueCreateInput) {
@@ -64,8 +66,24 @@ export async function createTechniqueWithValidations(db: PrismaClient, input: Te
     }
   }
 
+  if (input.targetEngagements && input.targetEngagements.length > 0) {
+    const targetIds = input.targetEngagements.map((engagement) => engagement.targetId);
+    if (new Set(targetIds).size !== targetIds.length) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Duplicate targets are not allowed" });
+    }
+    const existingTargets = await db.target.findMany({ where: { id: { in: targetIds } }, select: { id: true } });
+    if (existingTargets.length !== targetIds.length) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "One or more targets not found" });
+    }
+  }
+
   // Compute next sort order
   const nextSort = await getNextTechniqueSortOrder(db, input.operationId);
+
+  const formatStatus = (status: "succeeded" | "failed" | "unknown") => {
+    if (status === "unknown") return null;
+    return status === "succeeded";
+  };
 
   return db.technique.create({
     data: {
@@ -76,12 +94,18 @@ export async function createTechniqueWithValidations(db: PrismaClient, input: Te
       endTime: input.endTime ?? undefined,
       sourceIp: input.sourceIp,
       targetSystem: input.targetSystem,
-      crownJewelTargeted: input.crownJewelTargeted ?? false,
-      crownJewelCompromised: input.crownJewelCompromised ?? false,
       executedSuccessfully: input.executedSuccessfully ?? undefined,
       mitreTechniqueId: input.mitreTechniqueId,
       mitreSubTechniqueId: input.mitreSubTechniqueId,
       tools: input.toolIds ? { connect: input.toolIds.map((id) => ({ id })) } : undefined,
+      targetEngagements: input.targetEngagements?.length
+        ? {
+            create: input.targetEngagements.map((engagement) => ({
+              target: { connect: { id: engagement.targetId } },
+              wasSuccessful: formatStatus(engagement.status),
+            })),
+          }
+        : undefined,
     },
     include: {
       operation: { select: { id: true, name: true } },
@@ -92,6 +116,11 @@ export async function createTechniqueWithValidations(db: PrismaClient, input: Te
         include: {
           tools: true,
           logSources: true,
+        },
+      },
+      targetEngagements: {
+        include: {
+          target: true,
         },
       },
     },

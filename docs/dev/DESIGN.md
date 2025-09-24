@@ -40,7 +40,7 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 ## Core Entities
 
 - Operation { name, description, tags[], targets[], threatActor?, status, visibility, accessGroups[], techniques[] }
-- Technique { tactic, technique, subTechnique?, description, start/end, sourceIp?, targetSystem?, crownJewelTargeted?, crownJewelCompromised?, tools[] }
+- Technique { tactic, technique, subTechnique?, description, start/end, sourceIp?, targetSystem?, targetEngagements[], tools[] }
 - Outcome { type: DETECTION | PREVENTION | ATTRIBUTION, status, tools[]/logSources[], timestamp? }
 - ThreatActor { name, description, topThreat, mitreTechniques[] }
 - Target { name, description, isCrownJewel }
@@ -102,4 +102,4 @@ Unified pattern across tabs: SettingsHeader + EntityListCard + EntityModal; Inli
 
 - Initialization runs before the server starts via `scripts/init.ts`. It ensures an admin account exists and seeds MITRE data if empty by parsing the STIX bundle at `data/mitre/enterprise-attack.json` through `src/lib/mitreStix.ts` (no generated processed file).
 - Development (SQLite): after deleting the DB, run `npm run db:push` once to create tables. Then start the app; initialization will seed admin + MITRE. Data persists across restarts.
-- Production: the app never runs `db push`. Provision schema using migrations (`npm run db:migrate`) or ship a pre-created SQLite file and persist it. Initialization still creates the admin and seeds MITRE if tables are present and empty.
+- Production: the app never runs `db push`. Provision schema ahead of time (for now run `npx prisma db push` during deploys or ship a pre-created SQLite file and persist it). Initialization still creates the admin and seeds MITRE if tables are present and empty.

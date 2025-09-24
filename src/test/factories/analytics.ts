@@ -6,6 +6,7 @@ export type CoverageTechnique = Prisma.TechniqueGetPayload<{
     mitreTechnique: { include: { tactic: true } };
     operation: { select: { id: true; name: true; status: true } };
     outcomes: { include: { tools: true; logSources: true } };
+    targetEngagements: { include: { target: true } };
   };
 }>;
 
@@ -13,6 +14,7 @@ export type TechniqueWithSubTechnique = Prisma.TechniqueGetPayload<{
   include: {
     mitreSubTechnique: { include: { technique: { include: { tactic: true } } } };
     outcomes: { include: { tools: true; logSources: true } };
+    targetEngagements: { include: { target: true } };
   };
 }>;
 
@@ -82,8 +84,6 @@ export function buildCoverageTechnique(
     endTime: overrides.endTime ?? null,
     sourceIp: overrides.sourceIp ?? null,
     targetSystem: overrides.targetSystem ?? null,
-    crownJewelTargeted: overrides.crownJewelTargeted ?? false,
-    crownJewelCompromised: overrides.crownJewelCompromised ?? false,
     executedSuccessfully: overrides.executedSuccessfully ?? null,
     operationId,
     mitreTechniqueId: overrides.mitreTechniqueId ?? overrides.mitreTechnique?.id ?? "T1566",
@@ -106,6 +106,7 @@ export function buildCoverageTechnique(
       tactic,
     },
     outcomes: overrides.outcomes ?? [],
+    targetEngagements: overrides.targetEngagements ?? [],
   };
 
   return {
@@ -171,8 +172,6 @@ export function buildTechniqueWithSubTechnique(
     endTime: overrides.endTime ?? null,
     sourceIp: overrides.sourceIp ?? null,
     targetSystem: overrides.targetSystem ?? null,
-    crownJewelTargeted: overrides.crownJewelTargeted ?? false,
-    crownJewelCompromised: overrides.crownJewelCompromised ?? false,
     executedSuccessfully: overrides.executedSuccessfully ?? null,
     operationId: overrides.operationId ?? 1,
     mitreTechniqueId: overrides.mitreTechniqueId ?? null,
@@ -181,6 +180,7 @@ export function buildTechniqueWithSubTechnique(
     updatedAt: overrides.updatedAt ?? now,
     outcomes: overrides.outcomes ?? [],
     mitreSubTechnique: subTechniqueBase,
+    targetEngagements: overrides.targetEngagements ?? [],
   };
 
   return {

@@ -8,6 +8,7 @@ vi.mock("@/server/db", () => ({
     operation: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     technique: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     outcome: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
+    techniqueTarget: { deleteMany: vi.fn() },
     threatActor: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     target: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     tag: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
@@ -109,6 +110,7 @@ describe("Data Router", () => {
       await caller.clearData();
 
       expect(mockDb.outcome.deleteMany).toHaveBeenCalled();
+      expect(mockDb.techniqueTarget.deleteMany).toHaveBeenCalled();
       expect(mockDb.technique.deleteMany).toHaveBeenCalled();
       expect(mockDb.attackFlowLayout.deleteMany).toHaveBeenCalled();
       expect(mockDb.operation.deleteMany).toHaveBeenCalled();

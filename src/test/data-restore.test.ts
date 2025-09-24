@@ -14,6 +14,7 @@ vi.mock("@/server/db", () => ({
     logSource: { createMany: vi.fn(), deleteMany: vi.fn() },
     operation: { create: vi.fn(), deleteMany: vi.fn(), findMany: vi.fn() },
     technique: { create: vi.fn(), deleteMany: vi.fn(), findMany: vi.fn() },
+    techniqueTarget: { deleteMany: vi.fn() },
     outcome: { create: vi.fn(), deleteMany: vi.fn(), findMany: vi.fn() },
     attackFlowLayout: { create: vi.fn(), deleteMany: vi.fn(), findMany: vi.fn() },
   },

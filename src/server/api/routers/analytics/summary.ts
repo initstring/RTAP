@@ -343,9 +343,12 @@ export const summaryRouter = createTRPCRouter({
           },
         },
         select: {
-          crownJewelTargeted: true,
-          crownJewelCompromised: true,
           operation: { select: { id: true, createdAt: true, startDate: true } },
+          targetEngagements: {
+            include: {
+              target: true,
+            },
+          },
         },
       });
 
@@ -367,10 +370,11 @@ export const summaryRouter = createTRPCRouter({
         const key = makeKey(baseDate);
         if (!groups.has(key)) groups.set(key, { date: key, attempts: 0, successes: 0, targetedOps: new Set<number>() });
         const g = groups.get(key)!;
-        if (t.crownJewelTargeted) {
+        const crownTargets = t.targetEngagements?.filter((engagement) => engagement.target?.isCrownJewel) ?? [];
+        if (crownTargets.length > 0) {
           g.attempts++;
           g.targetedOps.add(t.operation.id);
-          if (t.crownJewelCompromised) g.successes++;
+          if (crownTargets.some((engagement) => engagement.wasSuccessful === true)) g.successes++;
         }
       });
 

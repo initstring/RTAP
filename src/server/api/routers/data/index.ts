@@ -7,6 +7,7 @@ import { logger } from "@/server/logger";
 
 const clearUserData = async (tx: Prisma.TransactionClient) => {
   await tx.outcome.deleteMany();
+  await tx.techniqueTarget.deleteMany();
   await tx.technique.deleteMany();
   await tx.attackFlowLayout.deleteMany();
   await tx.operation.deleteMany();
@@ -81,13 +82,19 @@ const techniqueSchema = z.object({
   endTime: z.coerce.date().optional().nullable(),
   sourceIp: z.string().optional().nullable(),
   targetSystem: z.string().optional().nullable(),
-  crownJewelTargeted: z.boolean().optional(),
-  crownJewelCompromised: z.boolean().optional(),
   executedSuccessfully: z.boolean().optional().nullable(),
   operationId: z.number(),
   mitreTechniqueId: z.string().optional().nullable(),
   mitreSubTechniqueId: z.string().optional().nullable(),
   tools: z.array(z.object({ id: z.string() })).optional(),
+  targetEngagements: z
+    .array(
+      z.object({
+        targetId: z.string(),
+        status: z.enum(["unknown", "succeeded", "failed"]).optional(),
+      }),
+    )
+    .optional(),
 });
 
 const outcomeSchema = z.object({
@@ -200,6 +207,12 @@ export const dataRouter = createTRPCRouter({
         db.technique.findMany({
           include: {
             tools: { select: { id: true } },
+            targetEngagements: {
+              select: {
+                targetId: true,
+                wasSuccessful: true,
+              },
+            },
           },
         }),
         db.outcome.findMany({
@@ -223,6 +236,19 @@ export const dataRouter = createTRPCRouter({
         })),
       );
 
+      const techniquesPayload = techniques.map(({ targetEngagements, ...technique }) => ({
+        ...technique,
+        targetEngagements: targetEngagements?.map((engagement) => ({
+          targetId: engagement.targetId,
+          status:
+            engagement.wasSuccessful === null || engagement.wasSuccessful === undefined
+              ? "unknown"
+              : engagement.wasSuccessful
+                ? "succeeded"
+                : "failed",
+        })),
+      }));
+
       return JSON.stringify(
         {
           version: "2.0",
@@ -235,7 +261,7 @@ export const dataRouter = createTRPCRouter({
             tools,
             logSources,
             operations,
-            techniques,
+            techniques: techniquesPayload,
             outcomes,
             attackFlowLayouts,
             threatActorTechniqueLinks,
@@ -313,12 +339,29 @@ export const dataRouter = createTRPCRouter({
           }
 
           for (const technique of payload.techniques ?? []) {
-            const { tools: techniqueTools = [], ...techniqueFields } = technique;
+            const {
+              tools: techniqueTools = [],
+              targetEngagements: engagementPayload = [],
+              ...techniqueFields
+            } = technique;
 
             await tx.technique.create({
               data: {
                 ...techniqueFields,
                 tools: techniqueTools.length ? { connect: techniqueTools.map(({ id }) => ({ id })) } : undefined,
+                targetEngagements: engagementPayload.length
+                  ? {
+                      create: engagementPayload.map((engagement) => ({
+                        targetId: engagement.targetId,
+                        wasSuccessful:
+                          engagement.status === undefined
+                            ? null
+                            : engagement.status === "unknown"
+                              ? null
+                              : engagement.status === "succeeded",
+                      })),
+                    }
+                  : undefined,
               },
             });
           }

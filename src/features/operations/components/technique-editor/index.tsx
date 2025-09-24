@@ -7,15 +7,19 @@
 // PR2 move: features/operations/components
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { Button, Card, CardHeader, CardTitle, Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui";
 import { X, FileText, Play, Target, Edit } from "lucide-react";
 import { getCuratedShortDescription } from "@/lib/mitreDescriptionUtils";
 import { useTechniqueEditorData, useTechniqueEditorForm } from "@/features/operations/hooks";
+import type { TechniqueEditorFormValues } from "@/features/operations/hooks/useTechniqueEditorForm";
 import type { SelectedTechnique } from "@/features/operations/techniqueEditor.types";
 import OverviewSection from "./overview-section";
 import ExecutionSection from "./execution-section";
 import OutcomesSection from "./outcomes-section";
+
+type Operation = RouterOutputs["operations"]["getById"];
+type Technique = Operation["techniques"][number];
 
 // type Technique = RouterOutputs["techniques"]["getById"]; // Unused
 
@@ -52,9 +56,10 @@ export default function TechniqueEditorModal({
   );
 
   // Get existing technique data from operation (if in edit mode)
-  const existingTechnique = isEditMode && techniqueId 
-    ? operation?.techniques?.find(t => t.id === techniqueId)
-    : undefined;
+  const existingTechnique: Technique | undefined =
+    isEditMode && techniqueId
+      ? operation?.techniques?.find((technique) => technique.id === techniqueId)
+      : undefined;
 
   // Centralized data for editor
   const editorData = useTechniqueEditorData({ isOpen, selectedTacticId });
@@ -96,7 +101,6 @@ export default function TechniqueEditorModal({
   const formHook = useTechniqueEditorForm({
     operationId,
     existingTechnique: isEditMode ? existingTechnique : undefined,
-    targets: operation?.targets,
     onSuccess,
     onClose,
   });
@@ -284,11 +288,71 @@ export default function TechniqueEditorModal({
 
   const startTimeValue = form.watch("startTime") ?? "";
   const hasExecutionStart = Boolean(startTimeValue.trim());
-  const cjRaw = form.watch("crownJewelAccess") ?? "";
-  const cjAccess: "" | "yes" | "no" = cjRaw === "yes" ? "yes" : cjRaw === "no" ? "no" : "";
+  const watchedTargetEngagements = form.watch("targetEngagements");
+  const targetEngagements: TechniqueEditorFormValues["targetEngagements"] = useMemo(
+    () => watchedTargetEngagements ?? [],
+    [watchedTargetEngagements],
+  );
   const execRaw = form.watch("executionSuccess") ?? "";
   const execSuccess: "" | "yes" | "no" = execRaw === "yes" ? "yes" : execRaw === "no" ? "no" : "";
   const isFormValid = Boolean(selectedTechnique) && form.formState.isValid;
+
+  const targetLookup = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; isCrownJewel: boolean }>();
+    (operation?.targets ?? []).forEach((target) => {
+      map.set(target.id, {
+        id: target.id,
+        name: target.name,
+        isCrownJewel: target.isCrownJewel,
+      });
+    });
+
+    (existingTechnique?.targetEngagements ?? []).forEach((engagement) => {
+      if (map.has(engagement.targetId)) return;
+      if (engagement.target) {
+        map.set(engagement.targetId, {
+          id: engagement.target.id,
+          name: engagement.target.name,
+          isCrownJewel: engagement.target.isCrownJewel,
+        });
+      }
+    });
+
+    return map;
+  }, [operation?.targets, existingTechnique?.targetEngagements]);
+
+  const selectedTargets = useMemo(
+    () =>
+      targetEngagements.map((engagement) => {
+        const details = targetLookup.get(engagement.targetId);
+        return {
+          id: engagement.targetId,
+          name: details?.name ?? "Unknown Target",
+          isCrownJewel: details?.isCrownJewel ?? false,
+          status: engagement.status,
+        };
+      }),
+    [targetEngagements, targetLookup],
+  );
+
+  const handleTargetIdsChange = useCallback(
+    (ids: string[]) => {
+      const current = new Map(targetEngagements.map((engagement) => [engagement.targetId, engagement.status] as const));
+      const next = ids.map((id) => ({ targetId: id, status: current.get(id) ?? "unknown" }));
+      form.setValue("targetEngagements", next, { shouldDirty: true });
+    },
+    [form, targetEngagements],
+  );
+
+  const handleTargetStatusChange = useCallback(
+    (targetId: string, status: "unknown" | "succeeded" | "failed") => {
+      const next = targetEngagements.map((engagement) =>
+        engagement.targetId === targetId ? { ...engagement, status } : engagement,
+      );
+      form.setValue("targetEngagements", next, { shouldDirty: true });
+    },
+    [form, targetEngagements],
+  );
 
   useEffect(() => {
     if (hasExecutionStart) return;
@@ -391,10 +455,9 @@ export default function TechniqueEditorModal({
                     description: target.description ?? "",
                     isCrownJewel: target.isCrownJewel,
                   }))}
-                  selectedTargetIds={form.watch("selectedTargetIds")}
-                  onTargetIdsChange={(ids) => form.setValue("selectedTargetIds", ids, { shouldDirty: true })}
-                  crownJewelAccess={cjAccess}
-                  onCrownJewelAccessChange={(value) => form.setValue("crownJewelAccess", value as "" | "yes" | "no", { shouldDirty: true })}
+                  selectedTargets={selectedTargets}
+                  onTargetIdsChange={handleTargetIdsChange}
+                  onTargetStatusChange={handleTargetStatusChange}
                   executionSuccess={execSuccess}
                   onExecutionSuccessChange={(value) => form.setValue("executionSuccess", value as "" | "yes" | "no", { shouldDirty: true })}
                 />

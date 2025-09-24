@@ -158,7 +158,11 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
       targetingOps.forEach((op) => {
         let compromised = false;
         op.techniques?.forEach((tech) => {
-          if (tech.crownJewelCompromised) compromised = true;
+          const jewelEngagements =
+            tech.targetEngagements?.filter((engagement) => engagement.target?.id === jewel.id) ?? [];
+          if (jewelEngagements.some((engagement) => engagement.wasSuccessful === true)) {
+            compromised = true;
+          }
           tech.outcomes?.forEach((o) => {
             if (o.status === "NOT_APPLICABLE") return;
             if (o.type === "DETECTION") {
