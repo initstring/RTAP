@@ -9,7 +9,7 @@ vi.mock("@/server/db", () => ({
     technique: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     outcome: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     threatActor: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
-    crownJewel: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
+    target: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     tag: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     tool: { count: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     toolCategory: { findMany: vi.fn(), deleteMany: vi.fn() },
@@ -44,7 +44,7 @@ describe("Data Router", () => {
       mockDb.technique.count.mockResolvedValue(9);
       mockDb.outcome.count.mockResolvedValue(5);
       mockDb.threatActor.count.mockResolvedValue(3);
-      mockDb.crownJewel.count.mockResolvedValue(2);
+      mockDb.target.count.mockResolvedValue(2);
       mockDb.tag.count.mockResolvedValue(6);
       mockDb.tool.count.mockResolvedValue(7);
       mockDb.logSource.count.mockResolvedValue(8);
@@ -54,7 +54,7 @@ describe("Data Router", () => {
         techniques: 9,
         outcomes: 5,
         threatActors: 3,
-        crownJewels: 2,
+        targets: 2,
         tags: 6,
         tools: 7,
         logSources: 8,
@@ -72,7 +72,7 @@ describe("Data Router", () => {
     it("creates a backup payload for admins", async () => {
       const caller = createCaller(UserRole.ADMIN);
 
-      mockDb.crownJewel.findMany.mockResolvedValue([]);
+      mockDb.target.findMany.mockResolvedValue([]);
       mockDb.tag.findMany.mockResolvedValue([]);
       mockDb.toolCategory.findMany.mockResolvedValue([]);
       mockDb.tool.findMany.mockResolvedValue([]);
@@ -116,7 +116,7 @@ describe("Data Router", () => {
       expect(mockDb.toolCategory.deleteMany).toHaveBeenCalled();
       expect(mockDb.logSource.deleteMany).toHaveBeenCalled();
       expect(mockDb.tag.deleteMany).toHaveBeenCalled();
-      expect(mockDb.crownJewel.deleteMany).toHaveBeenCalled();
+      expect(mockDb.target.deleteMany).toHaveBeenCalled();
       expect(mockDb.threatActor.deleteMany).toHaveBeenCalled();
     });
 

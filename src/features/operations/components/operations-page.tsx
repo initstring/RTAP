@@ -223,11 +223,14 @@ export default function OperationsPage() {
                         </div>
                       )}
                       
-                      {operation.crownJewels.length > 0 && (
+                      {operation.targets.length > 0 && (
                         <div className="flex items-start gap-2 text-sm">
                           <Target className="w-4 h-4 text-[var(--color-text-muted)] mt-0.5" />
                           <span className="text-[var(--color-text-secondary)]">
-                            <strong>Targeting:</strong> {operation.crownJewels.map(jewel => jewel.name).join(", ")}
+                            <strong>Targeting:</strong>{" "}
+                            {operation.targets
+                              .map((target) => (target.isCrownJewel ? `${target.name} (CJ)` : target.name))
+                              .join(", ")}
                           </span>
                         </div>
                       )}

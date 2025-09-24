@@ -39,11 +39,11 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 
 ## Core Entities
 
-- Operation { name, description, tags[], crownJewels[], threatActor?, status, visibility, accessGroups[], techniques[] }
+- Operation { name, description, tags[], targets[], threatActor?, status, visibility, accessGroups[], techniques[] }
 - Technique { tactic, technique, subTechnique?, description, start/end, sourceIp?, targetSystem?, crownJewelTargeted?, crownJewelCompromised?, tools[] }
 - Outcome { type: DETECTION | PREVENTION | ATTRIBUTION, status, tools[]/logSources[], timestamp? }
 - ThreatActor { name, description, topThreat, mitreTechniques[] }
-- CrownJewel { name, description }
+- Target { name, description, isCrownJewel }
 - Tool { name, type: DEFENSIVE | OFFENSIVE, category }
 - ToolCategory { name, type }
 - Tag { name, description, color }
@@ -61,16 +61,16 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 
 - Filters: search, status (All/Planning/Active/Completed/Cancelled), selectable tag chips.
 - List: neutral operation cards; click to open detail. Card delete uses ConfirmModal.
-- Create/Edit Operation: elevated modal with name/description, optional threat actor, dates, tags, crown jewels.
+- Create/Edit Operation: elevated modal with name/description, optional threat actor, dates, tags, targets (mark crown jewels).
 
 #### Operation Detail
 
-- Header: name, description, tags, threat actor, crown jewels, status.
+- Header: name, description, tags, threat actor, targets (CJ flagged), status.
 - KPIs: detection/prevention/attribution (%) computed from graded outcomes (excludes N/A).
 - Tabs
   - Techniques: drag‑and‑drop list; InlineActions for edit/delete. Technique Editor (elevated) with:
     - Overview: tactic/technique (sub‑tech aware) + description.
-    - Execution: start/end (datetime with “Now”), source IP, target system, offensive tools, crown‑jewel flags.
+    - Execution: start/end (datetime with “Now”), source IP, target system, offensive tools, target selection + crown jewel flag.
     - Outcomes: grade detection/prevention/attribution; add tools/log sources; optional timestamps.
   - ATT&CK Heatmap: full MITRE matrix with executed highlighting; sub‑tech expansion; ops/all toggle available in analytics view.
   - Attack Flow: simple flow of techniques (editors can organize).
@@ -90,7 +90,7 @@ Unified pattern across tabs: SettingsHeader + EntityListCard + EntityModal; Inli
 
 - Users: create/edit; role picker; delete via ConfirmModal.
 - Groups: create/edit; manage membership; one Tag per Group; delete via ConfirmModal.
-- Taxonomy: Tags, Tool Categories (by type), Tools, Threat Actors (attach ATT&CK techniques), Crown Jewels, Log Sources.
+- Taxonomy: Tags, Tool Categories (by type), Tools, Threat Actors (attach ATT&CK techniques), Targets (with crown jewel toggle), Log Sources.
 - Data: overview metrics; export/import a combined operations + taxonomy backup (always replaces existing data); clear-all confirmation.
 
 ## Data & Validation

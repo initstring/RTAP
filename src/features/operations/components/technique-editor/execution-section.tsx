@@ -27,10 +27,10 @@ export interface ExecutionSectionProps {
   selectedOffensiveToolIds: string[];
   onOffensiveToolIdsChange: (ids: string[]) => void;
 
-  // Crown jewels
-  crownJewels: Array<{ id: string; name: string; description: string }> | undefined;
-  selectedCrownJewelIds: string[];
-  onCrownJewelIdsChange: (ids: string[]) => void;
+  // Targets
+  targets: Array<{ id: string; name: string; description: string; isCrownJewel?: boolean }> | undefined;
+  selectedTargetIds: string[];
+  onTargetIdsChange: (ids: string[]) => void;
   crownJewelAccess: string; // "yes" | "no" | ""
   onCrownJewelAccessChange: (value: string) => void;
   executionSuccess: string; // "yes" | "no" | ""
@@ -50,9 +50,9 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
     offensiveTools,
     selectedOffensiveToolIds,
     onOffensiveToolIdsChange,
-    crownJewels,
-    selectedCrownJewelIds,
-    onCrownJewelIdsChange,
+    targets,
+    selectedTargetIds,
+    onTargetIdsChange,
     crownJewelAccess,
     onCrownJewelAccessChange,
     executionSuccess,
@@ -135,18 +135,18 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
 
       <div>
         <TaxonomySelector
-          variant="crown-jewels"
-          items={crownJewels ?? []}
-          selectedIds={selectedCrownJewelIds}
-          onSelectionChange={onCrownJewelIdsChange}
-          label="Crown Jewel Targeting"
-          description="Select crown jewels this technique targeted:"
+          variant="targets"
+          items={(targets ?? []).map((target) => ({ ...target }))}
+          selectedIds={selectedTargetIds}
+          onSelectionChange={onTargetIdsChange}
+          label="Targets"
+          description="Select assets this technique targeted. Crown jewels are flagged with a CJ badge."
           compactHeader
           searchable={false}
           multiple={true}
         />
 
-        {selectedCrownJewelIds.length > 0 && (
+        {selectedTargetIds.length > 0 && (
           <div className="space-y-2 mt-4">
             <Label htmlFor="crownJewelAccess">Successfully Accessed Crown Jewels</Label>
             <div className="flex items-center gap-2">

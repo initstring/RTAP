@@ -9,7 +9,7 @@ vi.mock("@/server/db", () => ({
     operation: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
     threatActor: { findUnique: vi.fn() },
     tag: { findMany: vi.fn() },
-    crownJewel: { findMany: vi.fn() },
+    target: { findMany: vi.fn() },
     userGroup: { count: vi.fn() },
   },
 }));
@@ -22,7 +22,7 @@ const createOperationData = {
   description: "Test operation description",
   threatActorId: "threat-actor-1",
   tagIds: ["tag-1", "tag-2"],
-  crownJewelIds: ["crown-jewel-1"],
+  targetIds: ["target-1"],
 };
 
 const mockOperation = {
@@ -41,7 +41,7 @@ const mockOperation = {
   createdBy: { id: "user-1", name: "Test User", email: "test@example.com" },
   threatActor: { id: "threat-actor-1", name: "APT29" },
   tags: [{ id: "tag-1", name: "Purple Team" }],
-  crownJewels: [{ id: "crown-jewel-1", name: "Customer Database" }],
+  targets: [{ id: "target-1", name: "Customer Database", isCrownJewel: true }],
   techniques: [],
 };
 
@@ -56,7 +56,7 @@ describe("Operations Router — create/update/delete", () => {
     const caller = operationsRouter.createCaller(ctx);
     mockDb.threatActor.findUnique.mockResolvedValue({ id: "threat-actor-1", name: "APT29" });
     mockDb.tag.findMany.mockResolvedValue([{ id: "tag-1", name: "Purple Team" }, { id: "tag-2", name: "Stealth" }]);
-    mockDb.crownJewel.findMany.mockResolvedValue([{ id: "crown-jewel-1", name: "Customer Database" }]);
+    mockDb.target.findMany.mockResolvedValue([{ id: "target-1", name: "Customer Database", isCrownJewel: true }]);
     mockDb.operation.create.mockResolvedValue(mockOperation);
     const res = await caller.create(createOperationData);
     expect(res).toEqual(mockOperation);

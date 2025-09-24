@@ -1,6 +1,6 @@
 import { createTRPCRouter } from "@/server/api/trpc";
 import { threatActorsRouter } from "./threat-actors";
-import { crownJewelsRouter } from "./crown-jewels";
+import { targetsRouter } from "./targets";
 import { tagsRouter } from "./tags";
 import { toolCategoriesRouter } from "./tool-categories";
 import { toolsRouter } from "./tools";
@@ -9,7 +9,7 @@ import { mitreRouter } from "./mitre";
 
 export const taxonomyRouter = createTRPCRouter({
   threatActors: threatActorsRouter,
-  crownJewels: crownJewelsRouter,
+  targets: targetsRouter,
   tags: tagsRouter,
   toolCategories: toolCategoriesRouter,
   tools: toolsRouter,

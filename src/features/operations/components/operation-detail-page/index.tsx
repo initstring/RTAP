@@ -147,10 +147,11 @@ export default function OperationDetailPage({ operationId }: Props) {
                   <Target className="w-4 h-4 text-[var(--color-text-muted)]" />
                   <span className="text-[var(--color-text-muted)]">Targeting:</span>
                   <span className="text-[var(--color-text-primary)]">
-                    {operation.crownJewels.length > 0
-                      ? operation.crownJewels.map(cj => cj.name).join(', ')
-                      : 'General Infrastructure'
-                    }
+                    {operation.targets.length > 0
+                      ? operation.targets
+                          .map((target) => (target.isCrownJewel ? `${target.name} (CJ)` : target.name))
+                          .join(', ')
+                      : 'General Infrastructure'}
                   </span>
                 </div>
               </div>

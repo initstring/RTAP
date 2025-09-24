@@ -145,15 +145,17 @@ model ThreatActor {
   @@index([topThreat])
 }
 
-model CrownJewel {
-  id          String      @id @default(cuid())
-  name        String      @unique // e.g., "Customer Database", "Source Code Repository"
-  description String
-  operations  Operation[] @relation("OperationCrownJewels")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+model Target {
+  id            String      @id @default(cuid())
+  name          String      @unique // e.g., "Customer Database", "Source Code Repository"
+  description   String
+  isCrownJewel  Boolean     @default(false)
+  operations    Operation[] @relation("OperationTargets")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([name])
+  @@index([isCrownJewel])
 }
 
 model Tag {
@@ -266,9 +268,9 @@ model Operation {
   threatActorId String?
 
   // Many-to-many relationships
-  tags        Tag[]        @relation("OperationTags")
-  crownJewels CrownJewel[] @relation("OperationCrownJewels")
-  techniques  Technique[]
+  tags    Tag[]    @relation("OperationTags")
+  targets Target[] @relation("OperationTargets")
+  techniques Technique[]
 
   // Access control
   visibility   OperationVisibility @default(EVERYONE)

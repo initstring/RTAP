@@ -1,25 +1,25 @@
 import { TRPCError } from "@trpc/server";
 import type { PrismaClient, ToolType } from "@prisma/client";
 
-// Crown Jewels
-export type CreateCrownJewelDTO = { name: string; description: string };
-export type UpdateCrownJewelDTO = { id: string; name?: string; description?: string };
+// Targets
+export type CreateTargetDTO = { name: string; description: string; isCrownJewel?: boolean };
+export type UpdateTargetDTO = { id: string; name?: string; description?: string; isCrownJewel?: boolean };
 
-export async function createCrownJewel(db: PrismaClient, dto: CreateCrownJewelDTO) {
-  return db.crownJewel.create({ data: dto });
+export async function createTarget(db: PrismaClient, dto: CreateTargetDTO) {
+  return db.target.create({ data: { ...dto, isCrownJewel: dto.isCrownJewel ?? false } });
 }
 
-export async function updateCrownJewel(db: PrismaClient, dto: UpdateCrownJewelDTO) {
-  const { id, ...data } = dto;
-  return db.crownJewel.update({ where: { id }, data });
+export async function updateTarget(db: PrismaClient, dto: UpdateTargetDTO) {
+  const { id, isCrownJewel, ...data } = dto;
+  return db.target.update({ where: { id }, data: { ...data, ...(isCrownJewel !== undefined ? { isCrownJewel } : {}) } });
 }
 
-export async function deleteCrownJewel(db: PrismaClient, id: string) {
-  const operationsCount = await db.operation.count({ where: { crownJewels: { some: { id } } } });
+export async function deleteTarget(db: PrismaClient, id: string) {
+  const operationsCount = await db.operation.count({ where: { targets: { some: { id } } } });
   if (operationsCount > 0) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: `Cannot delete crown jewel: ${operationsCount} operation(s) are using this crown jewel` });
+    throw new TRPCError({ code: "BAD_REQUEST", message: `Cannot delete target: ${operationsCount} operation(s) are using this target` });
   }
-  return db.crownJewel.delete({ where: { id } });
+  return db.target.delete({ where: { id } });
 }
 
 // Tags

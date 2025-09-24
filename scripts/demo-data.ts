@@ -76,20 +76,24 @@ async function seedTaxonomy() {
     logSources[name] = ls.id;
   }
 
-  const crownJewels = {} as Record<string, string>;
-  for (const cj of [
-    "Customer Database",
-    "Source Code Repository",
-    "Payment Processing System",
-    "Email Server",
-    "HR Records",
-  ]) {
-    const c = await db.crownJewel.upsert({
-      where: { name: cj },
-      update: {},
-      create: { name: cj, description: `${cj} crown jewel` },
+  const targets = {} as Record<string, string>;
+  const targetDefs: Array<{ name: string; description: string; isCrownJewel: boolean }> = [
+    { name: "Customer Database", description: "Primary production customer data store", isCrownJewel: true },
+    { name: "Source Code Repository", description: "Core application source control", isCrownJewel: true },
+    { name: "Payment Processing System", description: "Systems handling card payments", isCrownJewel: true },
+    { name: "Email Server", description: "Corporate email infrastructure", isCrownJewel: true },
+    { name: "HR Records", description: "Sensitive employee data store", isCrownJewel: true },
+    { name: "Employee Credentials", description: "Employee identity and password vault", isCrownJewel: false },
+    { name: "Employee Endpoint", description: "Standard employee workstation image", isCrownJewel: false },
+    { name: "Application Access Token", description: "Service-to-service OAuth token", isCrownJewel: false },
+  ];
+  for (const target of targetDefs) {
+    const record = await db.target.upsert({
+      where: { name: target.name },
+      update: { description: target.description, isCrownJewel: target.isCrownJewel },
+      create: target,
     });
-    crownJewels[cj] = c.id;
+    targets[target.name] = record.id;
   }
 
   const tags = {} as Record<string, string>;
@@ -170,14 +174,14 @@ async function seedTaxonomy() {
     threatActors[a.name] = { id: actor.id };
   }
 
-  return { tools, logSources, crownJewels, threatActors, tags };
+  return { tools, logSources, targets, threatActors, tags };
 }
 
 interface SeedCtx {
   userId: string;
   tools: Record<string, string>;
   logSources: Record<string, string>;
-  crownJewels: Record<string, string>;
+  targets: Record<string, string>;
   threatActors: Record<string, { id: string }>;
   tags: Record<string, string>;
 }
@@ -213,13 +217,13 @@ interface OperationSeed {
   threatActor?: string;
   start: Date;
   end: Date | null;
-  crownJewels: string[];
+  targets: string[];
   tags: string[];
   techniques: TechniqueSeed[];
 }
 
 async function seedOperations(ctx: SeedCtx) {
-  const { userId, tools, logSources, crownJewels, threatActors, tags } = ctx;
+  const { userId, tools, logSources, targets, threatActors, tags } = ctx;
 
   const operations: OperationSeed[] = [
     {
@@ -229,7 +233,7 @@ async function seedOperations(ctx: SeedCtx) {
       threatActor: threatActors.APT29!.id,
       start: new Date("2025-01-05T08:00:00Z"),
       end: new Date("2025-02-15T16:00:00Z"),
-      crownJewels: ["Email Server", "Payment Processing System"],
+      targets: ["Email Server", "Payment Processing System", "Employee Credentials"],
       tags: ["Stealth"],
       techniques: [
         {
@@ -348,7 +352,7 @@ async function seedOperations(ctx: SeedCtx) {
       threatActor: threatActors.FIN7!.id,
       start: new Date("2025-02-15T10:00:00Z"),
       end: new Date("2025-05-15T18:00:00Z"),
-      crownJewels: ["Payment Processing System"],
+      targets: ["Payment Processing System", "Employee Endpoint"],
       tags: ["Opportunistic"],
       techniques: [
         {
@@ -467,7 +471,7 @@ async function seedOperations(ctx: SeedCtx) {
       threatActor: threatActors["Lazarus Group"]!.id,
       start: new Date("2024-08-01T09:00:00Z"),
       end: new Date("2025-01-31T17:00:00Z"),
-      crownJewels: ["Source Code Repository"],
+      targets: ["Source Code Repository", "Application Access Token"],
       tags: ["Purple Team"],
       techniques: [
         {
@@ -576,7 +580,7 @@ async function seedOperations(ctx: SeedCtx) {
       status: OperationStatus.COMPLETED,
       start: new Date("2025-04-01T08:00:00Z"),
       end: new Date("2025-07-31T18:00:00Z"),
-      crownJewels: ["Customer Database", "HR Records"],
+      targets: ["Customer Database", "HR Records", "Employee Credentials"],
       tags: ["Stealth"],
       techniques: [
         {
@@ -781,7 +785,7 @@ async function seedOperations(ctx: SeedCtx) {
       status: OperationStatus.PLANNING,
       start: new Date("2025-06-01T00:00:00Z"),
       end: null,
-      crownJewels: ["Source Code Repository"],
+      targets: ["Source Code Repository", "Employee Credentials"],
       tags: ["Purple Team"],
       techniques: [
         {
@@ -832,8 +836,8 @@ async function seedOperations(ctx: SeedCtx) {
         endDate: op.end,
         createdById: userId,
         threatActorId: op.threatActor ?? undefined,
-        crownJewels: {
-          connect: op.crownJewels.map((n) => ({ id: crownJewels[n] })),
+        targets: {
+          connect: op.targets.map((n) => ({ id: targets[n] })),
         },
         tags: {
           connect: op.tags.map((n) => ({ id: tags[n] })),

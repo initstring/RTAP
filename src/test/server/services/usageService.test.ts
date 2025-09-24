@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@prisma/client";
 import {
-  getCrownJewelUsageCount,
+  getTargetUsageCount,
   getTagUsageCount,
   getThreatActorUsageCount,
   getToolCategoryUsageCount,
@@ -17,12 +17,12 @@ describe("usageService", () => {
     expect(count).toHaveBeenCalledWith({ where: { threatActorId: "actor-1" } });
   });
 
-  it("counts crown jewel usage via operations", async () => {
+  it("counts target usage via operations", async () => {
     const count = vi.fn().mockResolvedValue(2);
     const db = { operation: { count } } as unknown as PrismaClient;
 
-    await expect(getCrownJewelUsageCount(db, "cj-1")).resolves.toBe(2);
-    expect(count).toHaveBeenCalledWith({ where: { crownJewels: { some: { id: "cj-1" } } } });
+    await expect(getTargetUsageCount(db, "target-1")).resolves.toBe(2);
+    expect(count).toHaveBeenCalledWith({ where: { targets: { some: { id: "target-1" } } } });
   });
 
   it("counts tag usage via operations", async () => {

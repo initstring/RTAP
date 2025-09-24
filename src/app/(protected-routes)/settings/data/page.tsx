@@ -142,7 +142,7 @@ export default function DataSettingsPage() {
                 { label: "Techniques", value: stats.techniques },
                 { label: "Outcomes", value: stats.outcomes },
                 { label: "Threat Actors", value: stats.threatActors },
-                { label: "Crown Jewels", value: stats.crownJewels },
+                { label: "Targets", value: stats.targets },
                 { label: "Tags", value: stats.tags },
                 { label: "Tools", value: stats.tools },
                 { label: "Log Sources", value: stats.logSources },

@@ -7,7 +7,7 @@ vi.mock("@/server/db", () => ({
   db: {
     $transaction: vi.fn(),
     threatActor: { createMany: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
-    crownJewel: { createMany: vi.fn(), deleteMany: vi.fn() },
+    target: { createMany: vi.fn(), deleteMany: vi.fn() },
     tag: { createMany: vi.fn(), deleteMany: vi.fn() },
     toolCategory: { createMany: vi.fn(), deleteMany: vi.fn() },
     tool: { createMany: vi.fn(), deleteMany: vi.fn() },
@@ -45,13 +45,13 @@ describe("Data Restore", () => {
 
     const payload = {
       threatActors: [{ id: "ta1", name: "APT29", description: "desc" }],
-      crownJewels: [{ id: "cj1", name: "DB", description: "desc" }],
+      targets: [{ id: "cj1", name: "DB", description: "desc", isCrownJewel: true }],
       tags: [{ id: "tag1", name: "Stealth", description: "d" }],
       toolCategories: [{ id: "cat1", name: "EDR", type: "DEFENSIVE" as const }],
       tools: [{ id: "tool1", name: "Falcon", categoryId: "cat1", type: "DEFENSIVE" as const }],
       logSources: [{ id: "log1", name: "SIEM", description: "d" }],
       operations: [
-        { id: 1, name: "Op1", description: "d", createdById: "u1", tags: [{ id: "tag1" }], crownJewels: [{ id: "cj1" }] },
+        { id: 1, name: "Op1", description: "d", createdById: "u1", tags: [{ id: "tag1" }], targets: [{ id: "cj1" }] },
       ],
       techniques: [{ id: "tech-inst", description: "d", operationId: 1, tools: [{ id: "tool1" }] }],
       outcomes: [

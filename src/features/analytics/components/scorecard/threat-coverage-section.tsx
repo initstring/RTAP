@@ -40,7 +40,11 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
   const { data: threatActors } = api.taxonomy.threatActors.list.useQuery();
-  const { data: crownJewels } = api.taxonomy.crownJewels.list.useQuery();
+  const { data: targetsData, isLoading: isTargetsLoading } = api.taxonomy.targets.list.useQuery();
+  const crownJewels = useMemo(
+    () => (targetsData ?? []).filter((target) => target.isCrownJewel),
+    [targetsData],
+  );
 
   const operations = useMemo(() => {
     const pages = operationsPages?.pages ?? [];
@@ -130,7 +134,7 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
     if (!crownJewels) return [];
     return crownJewels.map((jewel) => {
       const targetingOps = operations.filter((op) =>
-        op.crownJewels?.some((cj) => cj.id === jewel.id)
+        op.targets?.some((target) => target.id === jewel.id)
       );
       if (targetingOps.length === 0) {
         return {
@@ -200,9 +204,9 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
     isOperationsLoading ||
     isFetching ||
     isFetchingNextPage ||
+    isTargetsLoading ||
     !operationsPages ||
-    !threatActors ||
-    !crownJewels;
+    !threatActors;
 
   if (isLoading) {
     return (

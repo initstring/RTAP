@@ -13,7 +13,7 @@ const createOperationSchema = z.object({
   description: z.string().min(1, "Description is required"),
   threatActorId: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
-  crownJewelIds: z.array(z.string()).optional(),
+  targetIds: z.array(z.string()).optional(),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   visibility: z.nativeEnum(OperationVisibility).optional(),
@@ -27,7 +27,7 @@ const updateOperationSchema = z.object({
   status: z.nativeEnum(OperationStatus).optional(),
   threatActorId: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
-  crownJewelIds: z.array(z.string()).optional(),
+  targetIds: z.array(z.string()).optional(),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   visibility: z.nativeEnum(OperationVisibility).optional(),
@@ -80,7 +80,7 @@ export const operationsRouter = createTRPCRouter({
           createdBy: { select: { id: true, name: true, email: true } },
           threatActor: true,
           tags: true,
-          crownJewels: true,
+          targets: true,
           accessGroups: { include: { group: true } },
           techniques: {
             include: {
@@ -153,7 +153,7 @@ export const operationsRouter = createTRPCRouter({
           createdBy: { select: { id: true, name: true, email: true } },
           threatActor: true,
           tags: true,
-          crownJewels: true,
+          targets: true,
           accessGroups: { include: { group: true } },
           techniques: {
             include: {

@@ -4,8 +4,8 @@ export async function getThreatActorUsageCount(db: PrismaClient, threatActorId: 
   return db.operation.count({ where: { threatActorId } });
 }
 
-export async function getCrownJewelUsageCount(db: PrismaClient, crownJewelId: string): Promise<number> {
-  return db.operation.count({ where: { crownJewels: { some: { id: crownJewelId } } } });
+export async function getTargetUsageCount(db: PrismaClient, targetId: string): Promise<number> {
+  return db.operation.count({ where: { targets: { some: { id: targetId } } } });
 }
 
 export async function getTagUsageCount(db: PrismaClient, tagId: string): Promise<number> {

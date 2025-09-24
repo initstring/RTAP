@@ -8,7 +8,7 @@ const user = { id: "u1", role: "OPERATOR" as UserRole };
 const mockDb = {
   threatActor: { findUnique: vi.fn() },
   tag: { findMany: vi.fn() },
-  crownJewel: { findMany: vi.fn() },
+  target: { findMany: vi.fn() },
   group: { findMany: vi.fn() },
   userGroup: { count: vi.fn() },
   operation: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
@@ -35,15 +35,15 @@ describe("operationService", () => {
     ).rejects.toThrow(new TRPCError({ code: "BAD_REQUEST", message: "One or more tags not found" }));
   });
 
-  it("throws on create when crown jewel missing", async () => {
-    mockDb.crownJewel.findMany.mockResolvedValue([]);
+  it("throws on create when target missing", async () => {
+    mockDb.target.findMany.mockResolvedValue([]);
     await expect(
       createOperationWithValidations({
         db: mockDb as unknown as PrismaClient,
         user,
-        input: { name: "Op", description: "D", crownJewelIds: ["cj1"] },
+        input: { name: "Op", description: "D", targetIds: ["target1"] },
       })
-    ).rejects.toThrow(new TRPCError({ code: "BAD_REQUEST", message: "One or more crown jewels not found" }));
+    ).rejects.toThrow(new TRPCError({ code: "BAD_REQUEST", message: "One or more targets not found" }));
   });
 
   it("throws on update when operation not found", async () => {

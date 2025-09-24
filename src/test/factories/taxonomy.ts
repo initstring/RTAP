@@ -6,11 +6,12 @@ export function buildTag(overrides: Partial<{ id: string; name: string; color: s
   };
 }
 
-export function buildCrownJewel(overrides: Partial<{ id: string; name: string; description?: string | null }> = {}) {
+export function buildTarget(overrides: Partial<{ id: string; name: string; description?: string | null; isCrownJewel?: boolean }> = {}) {
   return {
-    id: overrides.id ?? "cj-1",
-    name: overrides.name ?? "Crown Jewel",
+    id: overrides.id ?? "target-1",
+    name: overrides.name ?? "Target",
     description: overrides.description ?? null,
+    isCrownJewel: overrides.isCrownJewel ?? false,
   };
 }
 

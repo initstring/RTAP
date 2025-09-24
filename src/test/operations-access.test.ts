@@ -50,7 +50,7 @@ describe("operations access filters", () => {
       accessGroups: [ { group: { members: [] } } ],
       techniques: [],
       threatActor: null,
-      crownJewels: [],
+      targets: [],
       createdBy: { id: "other", name: "", email: "" },
     });
     const caller = operationsRouter.createCaller(ctx("VIEWER"));
