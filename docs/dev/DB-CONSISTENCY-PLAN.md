@@ -35,6 +35,7 @@
 - [ ] Update Vitest setup (`src/test/setup.ts`) to target a dedicated PostgreSQL schema or database (e.g., `rtap_test` with `?schema=vitest`).
 - [ ] Add a Vitest global setup that ensures the test database is migrated (call `prisma migrate deploy` or `prisma migrate reset --force --skip-generate --schema prisma/schema.prisma` against the test URL).
 - [ ] Modify `.github/workflows/ci.yml` to provision PostgreSQL via the built-in `services:` block, set `DATABASE_URL` to the service connection string, and run migrations before `npm run check`, `npm run test:coverage`, and `npm run build`.
+- [ ] Add a CI safeguard (e.g., `npx prisma migrate diff --from-migrations --to-schema-datamodel prisma/schema.prisma --exit-code`) that fails when the schema changes without a corresponding migration directory.
 - [ ] Update any other GitHub Actions (e.g., release workflows) that run Prisma commands to use the same PostgreSQL service configuration.
 
 ### 6. Streamline Production Packaging
