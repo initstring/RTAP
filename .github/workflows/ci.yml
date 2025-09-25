@@ -56,11 +56,18 @@ jobs:
           echo "Postgres did not become ready in time" >&2
           exit 1
 
+      - name: Prepare shadow database
+        run: |
+          PGPASSWORD=rtap psql -h localhost -U rtap -d postgres -c "DROP DATABASE IF EXISTS rtap_ci_shadow"
+          PGPASSWORD=rtap psql -h localhost -U rtap -d postgres -c "CREATE DATABASE rtap_ci_shadow"
+
       - name: Apply migrations
         run: npm run db:deploy
 
       - name: Check for schema drift
-        run: npx prisma migrate diff --from-migrations --to-schema-datamodel prisma/schema.prisma --exit-code
+        env:
+          SHADOW_DATABASE_URL: postgresql://rtap:rtap@localhost:5432/rtap_ci_shadow
+        run: npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --exit-code --shadow-database-url "$SHADOW_DATABASE_URL"
 
       - name: Lint + Typecheck
         env:
