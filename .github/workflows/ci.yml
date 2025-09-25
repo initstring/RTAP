@@ -43,8 +43,18 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
       - name: Wait for database
-        run: npx prisma db wait --schema prisma/schema.prisma --timeout 30
+        run: |
+          for i in {1..30}; do
+            PGPASSWORD=rtap pg_isready -h localhost -p 5432 -U rtap -d rtap_ci && exit 0
+            echo "Postgres not ready yet, retry $i/30..."
+            sleep 1
+          done
+          echo "Postgres did not become ready in time" >&2
+          exit 1
 
       - name: Apply migrations
         run: npm run db:deploy
