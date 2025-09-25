@@ -39,11 +39,12 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 
 ## Core Entities
 
-- Operation { name, description, tags[], crownJewels[], threatActor?, status, visibility, accessGroups[], techniques[] }
-- Technique { tactic, technique, subTechnique?, description, start/end, sourceIp?, targetSystem?, crownJewelTargeted?, crownJewelCompromised?, tools[] }
+- Operation { name, description, tags[], targets[], threatActor?, status, visibility, accessGroups[], techniques[] }
+- Technique { tactic, technique, subTechnique?, description, start/end, sourceIp?, targetSystem?, targets[], tools[], executedSuccessfully? }
+- TechniqueTarget { techniqueId, targetId, wasCompromised }
+- Target { name, description, isCrownJewel }
 - Outcome { type: DETECTION | PREVENTION | ATTRIBUTION, status, tools[]/logSources[], timestamp? }
 - ThreatActor { name, description, topThreat, mitreTechniques[] }
-- CrownJewel { name, description }
 - Tool { name, type: DEFENSIVE | OFFENSIVE, category }
 - ToolCategory { name, type }
 - Tag { name, description, color }
@@ -61,16 +62,16 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 
 - Filters: search, status (All/Planning/Active/Completed/Cancelled), selectable tag chips.
 - List: neutral operation cards; click to open detail. Card delete uses ConfirmModal.
-- Create/Edit Operation: elevated modal with name/description, optional threat actor, dates, tags, crown jewels.
+- Create/Edit Operation: elevated modal with name/description, optional threat actor, dates, tags, planned targets.
 
 #### Operation Detail
 
-- Header: name, description, tags, threat actor, crown jewels, status.
+- Header: name, description, tags, threat actor, planned targets (badges call out crown jewels and show compromised state), status.
 - KPIs: detection/prevention/attribution (%) computed from graded outcomes (excludes N/A).
 - Tabs
   - Techniques: drag‑and‑drop list; InlineActions for edit/delete. Technique Editor (elevated) with:
     - Overview: tactic/technique (sub‑tech aware) + description.
-    - Execution: start/end (datetime with “Now”), source IP, target system, offensive tools, crown‑jewel flags.
+    - Execution: start/end (datetime with “Now”), source IP, target system, offensive tools, target assignments (mark compromise per target).
     - Outcomes: grade detection/prevention/attribution; add tools/log sources; optional timestamps.
   - ATT&CK Heatmap: full MITRE matrix with executed highlighting; sub‑tech expansion; ops/all toggle available in analytics view.
   - Attack Flow: simple flow of techniques (editors can organize).
@@ -79,7 +80,7 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 
 Neutral cards; all results respect access filters.
 
-- Scorecard (`/analytics/scorecard`): tactic resilience, threat actor resilience, crown‑jewel analysis, response timing, and defensive tool/log effectiveness.
+- Scorecard (`/analytics/scorecard`): tactic resilience, threat actor resilience, target coverage (with crown‑jewel insight), response timing, and defensive tool/log effectiveness.
 - Scorecard Execution Outcomes: stacked horizontal bar chart per tactic that plots technique execution successes vs. failures (with unknown outcomes in a muted neutral). The legend reuses the analytics filter badge styling, tooltips surface the raw counts, and each row links to the contributing operations. The card sits alongside the summary metrics so teams can quickly compare totals with tactic-level performance.
 - Attack Matrix (`/analytics/attack-matrix`): ATT&CK matrix with operations/all toggle.
 - Trends (`/analytics/trends`): operations and effectiveness over time (charts).
@@ -90,7 +91,7 @@ Unified pattern across tabs: SettingsHeader + EntityListCard + EntityModal; Inli
 
 - Users: create/edit; role picker; delete via ConfirmModal.
 - Groups: create/edit; manage membership; one Tag per Group; delete via ConfirmModal.
-- Taxonomy: Tags, Tool Categories (by type), Tools, Threat Actors (attach ATT&CK techniques), Crown Jewels, Log Sources.
+- Taxonomy: Targets (optional crown‑jewel flag), Tags, Tool Categories (by type), Tools, Threat Actors (attach ATT&CK techniques), Log Sources.
 - Data: overview metrics; export/import a combined operations + taxonomy backup (always replaces existing data); clear-all confirmation.
 
 ## Data & Validation
@@ -103,3 +104,10 @@ Unified pattern across tabs: SettingsHeader + EntityListCard + EntityModal; Inli
 - Startup runs `scripts/init.ts` before Next.js launches. It executes `prisma migrate deploy` against `DATABASE_URL`, then ensures the initial admin user and MITRE dataset exist (parsed from `data/mitre/enterprise-attack.json` via `src/lib/mitreStix.ts`).
 - Local development: run `npm run db:up` to start the Dockerized Postgres instance, then `npm run init` to apply migrations + seed baseline data. Test runs target `TEST_DATABASE_URL` (defaults to a dedicated `rtap_test` database) and reset it automatically.
 - Production: bundle migrations, run `npm run db:deploy` (or the same `scripts/init.ts`) during release/startup, and persist the Postgres volume. No `prisma db push` usage in any environment.
+
+## Database Migrations
+
+- Prisma migrations are authoritative for schema changes. After editing `prisma/schema.prisma`, generate a named migration with `npm run db:migrate -- --name <change>`; commit both the schema diff and the new folder under `prisma/migrations/`.
+- Never edit historical migrations once merged. If a PR needs tweaks, update the migration before it lands; otherwise add a new migration on top.
+- Drift check: CI runs `npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --exit-code --shadow-database-url $SHADOW_DATABASE_URL`. Run the same command locally when you want to confirm migrations and schema are in lockstep.
+- Reproducibility: `npm run init` (or `npx prisma migrate reset`) rebuilds the database from migrations and seeds—use it to verify upgrades and fresh installs behave the same.
