@@ -2,10 +2,20 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, viewerProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { checkOperationAccess, getAccessibleOperationFilter } from "@/server/api/access";
-import { createTechniqueWithValidations } from "@/server/services/techniqueService";
+import {
+  createTechniqueWithValidations,
+  ensureTargetsAssignableToOperation,
+  normalizeTechniqueTargetAssignments,
+} from "@/server/services/techniqueService";
 import { auditEvent, logger } from "@/server/logger";
+import type { Prisma } from "@prisma/client";
 
 // Input validation schemas
+const targetAssignmentSchema = z.object({
+  targetId: z.string(),
+  wasCompromised: z.boolean().optional(),
+});
+
 const createTechniqueSchema = z.object({
   operationId: z.number(),
   description: z
@@ -19,10 +29,9 @@ const createTechniqueSchema = z.object({
   endTime: z.date().optional(),
   sourceIp: z.string().optional(),
   targetSystem: z.string().optional(),
-  crownJewelTargeted: z.boolean().default(false),
-  crownJewelCompromised: z.boolean().default(false),
   toolIds: z.array(z.string()).optional(),
   executedSuccessfully: z.boolean().optional(),
+  targets: z.array(targetAssignmentSchema).optional(),
 });
 
 const updateTechniqueSchema = z.object({
@@ -35,10 +44,9 @@ const updateTechniqueSchema = z.object({
   endTime: z.date().nullable().optional(),
   sourceIp: z.string().optional(),
   targetSystem: z.string().optional(),
-  crownJewelTargeted: z.boolean().optional(),
-  crownJewelCompromised: z.boolean().optional(),
   toolIds: z.array(z.string()).optional(),
   executedSuccessfully: z.boolean().nullable().optional(),
+  targets: z.array(targetAssignmentSchema).optional(),
 });
 
 const getTechniqueSchema = z.object({
@@ -66,8 +74,8 @@ export const techniquesRouter = createTRPCRouter({
         });
       }
 
-      const { toolIds, ...rest } = input;
-      const created = await createTechniqueWithValidations(ctx.db, { ...rest, toolIds });
+      const { toolIds, targets, ...rest } = input;
+      const created = await createTechniqueWithValidations(ctx.db, { ...rest, toolIds, targets });
       logger.info(
         auditEvent(ctx, "sec.technique.create", {
           techniqueId: created.id,
@@ -85,12 +93,12 @@ export const techniquesRouter = createTRPCRouter({
   update: protectedProcedure
     .input(updateTechniqueSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, toolIds, ...updateData } = input;
+      const { id, toolIds, targets, ...updateData } = input;
 
       // Check if technique exists
       const existingTechnique = await ctx.db.technique.findUnique({
         where: { id },
-        include: { operation: true },
+        include: { operation: { include: { targets: { select: { id: true } } } } },
       });
 
       if (!existingTechnique) {
@@ -169,7 +177,33 @@ export const techniquesRouter = createTRPCRouter({
       // Prepare update data with relationship updates
       const updatePayload: typeof updateData & {
         tools?: { set: { id: string }[] };
+        targets?: {
+          deleteMany: Prisma.TechniqueTargetScalarWhereInput;
+          create?: { targetId: string; wasCompromised: boolean }[];
+        };
       } = { ...updateData };
+
+      if (targets !== undefined) {
+        const normalizedAssignments = normalizeTechniqueTargetAssignments(targets);
+        await ensureTargetsAssignableToOperation(
+          ctx.db,
+          existingTechnique.operationId,
+          normalizedAssignments,
+          existingTechnique.operation.targets.map((t) => t.id),
+        );
+
+        updatePayload.targets = {
+          deleteMany: {},
+          ...(normalizedAssignments.length
+            ? {
+                create: normalizedAssignments.map(({ targetId, wasCompromised }) => ({
+                  targetId,
+                  wasCompromised: wasCompromised ?? false,
+                })),
+              }
+            : {}),
+        };
+      }
 
       if (toolIds !== undefined) {
         updatePayload.tools = {
@@ -193,6 +227,11 @@ export const techniquesRouter = createTRPCRouter({
             include: {
               tools: true,
               logSources: true,
+            },
+          },
+          targets: {
+            include: {
+              target: true,
             },
           },
         },
@@ -342,6 +381,11 @@ export const techniquesRouter = createTRPCRouter({
               logSources: true,
             },
           },
+          targets: {
+            include: {
+              target: true,
+            },
+          },
         },
       });
 
@@ -380,6 +424,11 @@ export const techniquesRouter = createTRPCRouter({
             include: {
               tools: true,
               logSources: true,
+            },
+          },
+          targets: {
+            include: {
+              target: true,
             },
           },
         },

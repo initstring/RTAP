@@ -39,7 +39,7 @@ describe("Operations Router — read", () => {
   it("gets by id", async () => {
     const ctx = createTestContext(mockDb, "OPERATOR");
     const caller = operationsRouter.createCaller(ctx);
-    mockDb.operation.findUnique.mockResolvedValue({ ...mockOp, tags: [], crownJewels: [], techniques: [] });
+    mockDb.operation.findUnique.mockResolvedValue({ ...mockOp, tags: [], targets: [], techniques: [] });
     const result = await caller.getById({ id: 1 });
     expect(result.id).toBe(1);
     expect(result.name).toBe("Test Operation");

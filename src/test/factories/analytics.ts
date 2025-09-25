@@ -6,6 +6,7 @@ export type CoverageTechnique = Prisma.TechniqueGetPayload<{
     mitreTechnique: { include: { tactic: true } };
     operation: { select: { id: true; name: true; status: true } };
     outcomes: { include: { tools: true; logSources: true } };
+    targets: { include: { target: true } };
   };
 }>;
 
@@ -13,6 +14,7 @@ export type TechniqueWithSubTechnique = Prisma.TechniqueGetPayload<{
   include: {
     mitreSubTechnique: { include: { technique: { include: { tactic: true } } } };
     outcomes: { include: { tools: true; logSources: true } };
+    targets: { include: { target: true } };
   };
 }>;
 
@@ -74,6 +76,8 @@ export function buildCoverageTechnique(
   });
   const tactic = tacticOverrides ? { ...tacticBase, ...tacticOverrides } : tacticBase;
 
+  const targets: CoverageTechnique["targets"] = overrides.targets ?? [];
+
   const base: CoverageTechnique = {
     id: techniqueId,
     description: overrides.description ?? "Technique description",
@@ -82,8 +86,7 @@ export function buildCoverageTechnique(
     endTime: overrides.endTime ?? null,
     sourceIp: overrides.sourceIp ?? null,
     targetSystem: overrides.targetSystem ?? null,
-    crownJewelTargeted: overrides.crownJewelTargeted ?? false,
-    crownJewelCompromised: overrides.crownJewelCompromised ?? false,
+    targets,
     executedSuccessfully: overrides.executedSuccessfully ?? null,
     operationId,
     mitreTechniqueId: overrides.mitreTechniqueId ?? overrides.mitreTechnique?.id ?? "T1566",
@@ -121,6 +124,7 @@ export function buildCoverageTechnique(
               : tactic,
         }
       : base.mitreTechnique,
+    targets: overrides.targets ?? base.targets,
     outcomes: overrides.outcomes ?? base.outcomes,
   };
 }
@@ -163,6 +167,8 @@ export function buildTechniqueWithSubTechnique(
     technique: techniqueOverrides ? { ...techniqueBase, ...techniqueOverrides } : techniqueBase,
   };
 
+  const targets: TechniqueWithSubTechnique["targets"] = overrides.targets ?? [];
+
   const base: TechniqueWithSubTechnique = {
     id: techniqueId,
     description: overrides.description ?? "Technique description",
@@ -171,8 +177,7 @@ export function buildTechniqueWithSubTechnique(
     endTime: overrides.endTime ?? null,
     sourceIp: overrides.sourceIp ?? null,
     targetSystem: overrides.targetSystem ?? null,
-    crownJewelTargeted: overrides.crownJewelTargeted ?? false,
-    crownJewelCompromised: overrides.crownJewelCompromised ?? false,
+    targets,
     executedSuccessfully: overrides.executedSuccessfully ?? null,
     operationId: overrides.operationId ?? 1,
     mitreTechniqueId: overrides.mitreTechniqueId ?? null,
@@ -202,6 +207,7 @@ export function buildTechniqueWithSubTechnique(
               : techniqueBase,
         }
       : subTechniqueBase,
+    targets: overrides.targets ?? base.targets,
     outcomes: overrides.outcomes ?? base.outcomes,
   };
 }

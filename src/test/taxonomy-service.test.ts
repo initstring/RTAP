@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TRPCError } from "@trpc/server";
-import {
-  deleteTag,
-  createTool,
-  deleteCrownJewel,
-} from "@/server/services/taxonomyService";
+import { deleteTag, createTool, deleteTarget } from "@/server/services/taxonomyService";
 import type { ToolType, PrismaClient } from "@prisma/client";
 
 const mockDb = {
@@ -12,7 +8,8 @@ const mockDb = {
   toolCategory: { findFirst: vi.fn() },
   tool: { create: vi.fn() },
   outcome: { count: vi.fn() },
-  crownJewel: { delete: vi.fn() },
+  target: { delete: vi.fn() },
+  techniqueTarget: { count: vi.fn() },
 };
 
 describe("taxonomyService", () => {
@@ -34,10 +31,15 @@ describe("taxonomyService", () => {
     ).rejects.toThrow(new TRPCError({ code: "BAD_REQUEST", message: "Invalid category for tool type" }));
   });
 
-  it("blocks crown jewel deletion when in use", async () => {
+  it("blocks target deletion when in use", async () => {
     mockDb.operation.count.mockResolvedValue(1);
-    await expect(deleteCrownJewel(mockDb as unknown as PrismaClient, "cj1")).rejects.toThrow(
-      new TRPCError({ code: "BAD_REQUEST", message: "Cannot delete crown jewel: 1 operation(s) are using this crown jewel" })
+    mockDb.techniqueTarget.count.mockResolvedValue(2);
+    await expect(deleteTarget(mockDb as unknown as PrismaClient, "target-1")).rejects.toThrow(
+      new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Cannot delete target: currently referenced by 1 operation(s) and 2 technique(s)",
+      })
     );
+    expect(mockDb.target.delete).not.toHaveBeenCalled();
   });
 });

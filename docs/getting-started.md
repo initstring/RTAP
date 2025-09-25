@@ -11,7 +11,7 @@ This guide walks through the first workflow after you launch the application. Fo
   - Log Sources. Examples: Sysmon, Windows Event Logs, etc. These are used for recording attribution outcomes.
 - Optional:
   - Threat Actors. You can enter them manually or use the import option to pull in techniques directly from MITRE ATT&CK.
-  - Crown Jewels. Examples: Production DB, Source Code Repo, etc.
+  - Targets. Examples: Production DB, Source Code Repo, etc. Optionally, specify which are "crown jewels".
   - Tags. Examples: Stealth, Purple Team, etc. These can be applied to operations and used for filtering lists analytics.
 
 <p align="center">
@@ -53,7 +53,7 @@ This guide walks through the first workflow after you launch the application. Fo
   - Use the Tactic/Technique pickers to choose from the catalog
   - Fill in an optional description
 - Execution tab:
-  - Timing, execution details, offensive tooling, and crown jewel targeting
+  - Timing, execution details, offensive tooling, and assets compromised
 - Outcomes tab:
   - Was the technique detected, prevented, or attributed later during IR?
   - What tooling and log sources were involved in successful outcomes or SHOULD HAVE BEEN involved in failed outcomes?

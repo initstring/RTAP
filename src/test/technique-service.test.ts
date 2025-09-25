@@ -55,7 +55,7 @@ describe("createTechniqueWithValidations", () => {
   });
 
   it("throws when end time before start", async () => {
-    operationFindUnique.mockResolvedValue({ id: 1 });
+    operationFindUnique.mockResolvedValue({ id: 1, targets: [] });
     await expect(
       createTechniqueWithValidations(mockDb, {
         operationId: 1,
@@ -72,7 +72,7 @@ describe("createTechniqueWithValidations", () => {
   });
 
   it("creates technique with next sort order", async () => {
-    operationFindUnique.mockResolvedValue({ id: 1 });
+    operationFindUnique.mockResolvedValue({ id: 1, targets: [] });
     techniqueFindFirst.mockResolvedValue(null);
     toolFindMany.mockResolvedValue([{ id: "tool-1" }]);
     const result = { id: "tech-1" } as any;

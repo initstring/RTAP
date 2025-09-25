@@ -6,7 +6,7 @@ export interface OperationCreateInput {
   description: string;
   threatActorId?: string;
   tagIds?: string[];
-  crownJewelIds?: string[];
+  targetIds?: string[];
   startDate?: Date;
   endDate?: Date;
   visibility?: OperationVisibility;
@@ -19,7 +19,7 @@ export async function createOperationWithValidations(params: {
   input: OperationCreateInput;
 }) {
   const { db, user, input } = params;
-  const { tagIds, crownJewelIds, accessGroupIds, visibility, ...operationData } = input;
+  const { tagIds, targetIds, accessGroupIds, visibility, ...operationData } = input;
 
   // Verify threat actor exists if provided
   if (input.threatActorId) {
@@ -39,11 +39,11 @@ export async function createOperationWithValidations(params: {
     }
   }
 
-  // Verify crown jewels exist if provided
-  if (crownJewelIds && crownJewelIds.length > 0) {
-    const existingCrownJewels = await db.crownJewel.findMany({ where: { id: { in: crownJewelIds } } });
-    if (existingCrownJewels.length !== crownJewelIds.length) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "One or more crown jewels not found" });
+  // Verify targets exist if provided
+  if (targetIds && targetIds.length > 0) {
+    const existingTargets = await db.target.findMany({ where: { id: { in: targetIds } } });
+    if (existingTargets.length !== targetIds.length) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "One or more targets not found" });
     }
   }
 
@@ -83,13 +83,13 @@ export async function createOperationWithValidations(params: {
       visibility: effectiveVisibility,
       accessGroups: accessGroupsCreate ? { create: accessGroupsCreate } : undefined,
       tags: tagIds ? { connect: tagIds.map((id) => ({ id })) } : undefined,
-      crownJewels: crownJewelIds ? { connect: crownJewelIds.map((id) => ({ id })) } : undefined,
+      targets: targetIds ? { connect: targetIds.map((id) => ({ id })) } : undefined,
     },
     include: {
       createdBy: { select: { id: true, name: true, email: true } },
       threatActor: true,
       tags: true,
-      crownJewels: true,
+      targets: true,
       accessGroups: { include: { group: true } },
       techniques: {
         include: {
@@ -109,7 +109,7 @@ export interface OperationUpdateDTO {
   status?: OperationStatus;
   threatActorId?: string;
   tagIds?: string[];
-  crownJewelIds?: string[];
+  targetIds?: string[];
   startDate?: Date;
   endDate?: Date;
   visibility?: OperationVisibility;
@@ -122,7 +122,7 @@ export async function updateOperationWithValidations(params: {
   input: OperationUpdateDTO;
 }) {
   const { db, user, input } = params;
-  const { id, tagIds, crownJewelIds, accessGroupIds, visibility, ...updateData } = input;
+  const { id, tagIds, targetIds, accessGroupIds, visibility, ...updateData } = input;
 
   const existingOperation = await db.operation.findUnique({
     where: { id },
@@ -148,10 +148,10 @@ export async function updateOperationWithValidations(params: {
     }
   }
 
-  if (crownJewelIds && crownJewelIds.length > 0) {
-    const existingCrownJewels = await db.crownJewel.findMany({ where: { id: { in: crownJewelIds } } });
-    if (existingCrownJewels.length !== crownJewelIds.length) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "One or more crown jewels not found" });
+  if (targetIds && targetIds.length > 0) {
+    const existingTargets = await db.target.findMany({ where: { id: { in: targetIds } } });
+    if (existingTargets.length !== targetIds.length) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "One or more targets not found" });
     }
   }
 
@@ -163,7 +163,7 @@ export async function updateOperationWithValidations(params: {
   if (updateData.startDate !== undefined) updatePayload.startDate = updateData.startDate;
   if (updateData.endDate !== undefined) updatePayload.endDate = updateData.endDate;
   if (tagIds !== undefined) updatePayload.tags = { set: tagIds.map((id) => ({ id })) };
-  if (crownJewelIds !== undefined) updatePayload.crownJewels = { set: crownJewelIds.map((id) => ({ id })) };
+  if (targetIds !== undefined) updatePayload.targets = { set: targetIds.map((id) => ({ id })) };
   const nextVisibility = visibility ?? existingOperation.visibility;
   let resultingGroupIds: string[] = existingOperation.accessGroups.map((ag) => ag.groupId);
 
@@ -214,7 +214,7 @@ export async function updateOperationWithValidations(params: {
       createdBy: { select: { id: true, name: true, email: true } },
       threatActor: true,
       tags: true,
-      crownJewels: true,
+      targets: true,
       accessGroups: { include: { group: true } },
       techniques: { include: { mitreTechnique: true, mitreSubTechnique: true, outcomes: true } },
     },

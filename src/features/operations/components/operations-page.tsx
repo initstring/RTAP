@@ -173,7 +173,27 @@ export default function OperationsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {filteredOperations.map((operation) => (
+          {filteredOperations.map((operation) => {
+            const engagementMap = new Map<string, { name: string; isCrownJewel: boolean; compromised: boolean }>();
+            (operation.techniques ?? []).forEach((technique) => {
+              (technique.targets ?? []).forEach((assignment) => {
+                if (!assignment.target) return;
+                const existing = engagementMap.get(assignment.targetId);
+                if (existing) {
+                  existing.compromised = existing.compromised || assignment.wasCompromised;
+                } else {
+                  engagementMap.set(assignment.targetId, {
+                    name: assignment.target.name,
+                    isCrownJewel: assignment.target.isCrownJewel,
+                    compromised: assignment.wasCompromised ?? false,
+                  });
+                }
+              });
+            });
+            const engagedTargets = Array.from(engagementMap.entries()).map(([id, data]) => ({ id, ...data }));
+            const compromisedCount = engagedTargets.filter((target) => target.compromised).length;
+
+            return (
             <Link key={operation.id} href={`/operations/${operation.id}`}>
               <Card className="transition-colors cursor-pointer relative hover:z-10 hover:ring-2 hover:ring-[var(--ring)] hover:ring-offset-1 hover:ring-offset-[var(--color-surface)]">
                 <CardContent className="p-6">
@@ -223,12 +243,26 @@ export default function OperationsPage() {
                         </div>
                       )}
                       
-                      {operation.crownJewels.length > 0 && (
+                      {operation.targets.length > 0 && (
                         <div className="flex items-start gap-2 text-sm">
                           <Target className="w-4 h-4 text-[var(--color-text-muted)] mt-0.5" />
                           <span className="text-[var(--color-text-secondary)]">
-                            <strong>Targeting:</strong> {operation.crownJewels.map(jewel => jewel.name).join(", ")}
+                            <strong>Targets:</strong> {operation.targets.map(target => target.isCrownJewel ? `${target.name} (CJ)` : target.name).join(", ")}
                           </span>
+                        </div>
+                      )}
+
+                      {engagedTargets.length > 0 && (
+                        <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                          <Target className="w-4 h-4 text-[var(--color-text-muted)]" />
+                          <span>
+                            <strong>Engaged:</strong> {engagedTargets.length === 1 ? "1 target" : `${engagedTargets.length} targets`}
+                          </span>
+                          {compromisedCount > 0 && (
+                            <span className="text-[var(--color-error)]">
+                              <strong>Compromised:</strong> {compromisedCount === 1 ? "1 target" : `${compromisedCount} targets`}
+                            </span>
+                          )}
                         </div>
                       )}
 
@@ -307,7 +341,8 @@ export default function OperationsPage() {
                 </CardContent>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -76,20 +76,22 @@ async function seedTaxonomy() {
     logSources[name] = ls.id;
   }
 
-  const crownJewels = {} as Record<string, string>;
-  for (const cj of [
-    "Customer Database",
-    "Source Code Repository",
-    "Payment Processing System",
-    "Email Server",
-    "HR Records",
-  ]) {
-    const c = await db.crownJewel.upsert({
-      where: { name: cj },
-      update: {},
-      create: { name: cj, description: `${cj} crown jewel` },
+  const targets = {} as Record<string, string>;
+  const targetDefs = [
+    { name: "Customer Database", isCrownJewel: true },
+    { name: "Source Code Repository", isCrownJewel: true },
+    { name: "Payment Processing System", isCrownJewel: true },
+    { name: "Email Server", isCrownJewel: false },
+    { name: "HR Records", isCrownJewel: false },
+  ];
+
+  for (const def of targetDefs) {
+    const target = await db.target.upsert({
+      where: { name: def.name },
+      update: { isCrownJewel: def.isCrownJewel },
+      create: { name: def.name, description: `${def.name} asset`, isCrownJewel: def.isCrownJewel },
     });
-    crownJewels[cj] = c.id;
+    targets[def.name] = target.id;
   }
 
   const tags = {} as Record<string, string>;
@@ -170,14 +172,14 @@ async function seedTaxonomy() {
     threatActors[a.name] = { id: actor.id };
   }
 
-  return { tools, logSources, crownJewels, threatActors, tags };
+  return { tools, logSources, targets, threatActors, tags };
 }
 
 interface SeedCtx {
   userId: string;
   tools: Record<string, string>;
   logSources: Record<string, string>;
-  crownJewels: Record<string, string>;
+  targets: Record<string, string>;
   threatActors: Record<string, { id: string }>;
   tags: Record<string, string>;
 }
@@ -199,8 +201,7 @@ interface TechniqueSeed {
   end?: string;
   source?: string;
   target?: string;
-  crown?: boolean;
-  compromised?: boolean;
+  targetImpacts?: Array<{ name: string; compromised?: boolean }>;
   tools: string[];
   outcome?: OutcomeSeed;
   executedSuccessfully?: boolean;
@@ -213,13 +214,13 @@ interface OperationSeed {
   threatActor?: string;
   start: Date;
   end: Date | null;
-  crownJewels: string[];
+  targets: string[];
   tags: string[];
   techniques: TechniqueSeed[];
 }
 
 async function seedOperations(ctx: SeedCtx) {
-  const { userId, tools, logSources, crownJewels, threatActors, tags } = ctx;
+  const { userId, tools, logSources, targets, threatActors, tags } = ctx;
 
   const operations: OperationSeed[] = [
     {
@@ -229,7 +230,7 @@ async function seedOperations(ctx: SeedCtx) {
       threatActor: threatActors.APT29!.id,
       start: new Date("2025-01-05T08:00:00Z"),
       end: new Date("2025-02-15T16:00:00Z"),
-      crownJewels: ["Email Server", "Payment Processing System"],
+      targets: ["Email Server", "Payment Processing System"],
       tags: ["Stealth"],
       techniques: [
         {
@@ -325,8 +326,7 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-02-12T15:30:00Z",
           source: "203.0.113.5",
           target: "PaymentServer1",
-          crown: true,
-          compromised: true,
+          targetImpacts: [{ name: "Payment Processing System", compromised: true }],
           tools: ["Cobalt Strike"],
           executedSuccessfully: true,
           outcome: {
@@ -348,7 +348,7 @@ async function seedOperations(ctx: SeedCtx) {
       threatActor: threatActors.FIN7!.id,
       start: new Date("2025-02-15T10:00:00Z"),
       end: new Date("2025-05-15T18:00:00Z"),
-      crownJewels: ["Payment Processing System"],
+      targets: ["Payment Processing System"],
       tags: ["Opportunistic"],
       techniques: [
         {
@@ -425,8 +425,7 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-05-07T16:20:00Z",
           source: "198.51.100.7",
           target: "PaymentServer1",
-          crown: true,
-          compromised: false,
+          targetImpacts: [{ name: "Payment Processing System", compromised: false }],
           tools: ["Nmap"],
           executedSuccessfully: true,
           outcome: {
@@ -467,7 +466,7 @@ async function seedOperations(ctx: SeedCtx) {
       threatActor: threatActors["Lazarus Group"]!.id,
       start: new Date("2024-08-01T09:00:00Z"),
       end: new Date("2025-01-31T17:00:00Z"),
-      crownJewels: ["Source Code Repository"],
+      targets: ["Source Code Repository"],
       tags: ["Purple Team"],
       techniques: [
         {
@@ -515,8 +514,7 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2024-11-13T15:10:00Z",
           source: "203.0.113.9",
           target: "RepoServer1",
-          crown: true,
-          compromised: true,
+          targetImpacts: [{ name: "Source Code Repository", compromised: true }],
           tools: ["Nmap"],
           executedSuccessfully: true,
           outcome: {
@@ -576,7 +574,7 @@ async function seedOperations(ctx: SeedCtx) {
       status: OperationStatus.COMPLETED,
       start: new Date("2025-04-01T08:00:00Z"),
       end: new Date("2025-07-31T18:00:00Z"),
-      crownJewels: ["Customer Database", "HR Records"],
+      targets: ["Customer Database", "HR Records"],
       tags: ["Stealth"],
       techniques: [
         {
@@ -738,8 +736,7 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-07-04T14:10:00Z",
           source: "192.0.2.10",
           target: "DBServer1",
-          crown: true,
-          compromised: false,
+          targetImpacts: [{ name: "Customer Database", compromised: false }],
           tools: ["Nmap"],
           executedSuccessfully: true,
           outcome: {
@@ -759,8 +756,7 @@ async function seedOperations(ctx: SeedCtx) {
           end: "2025-07-04T15:30:00Z",
           source: "192.0.2.10",
           target: "HRServer",
-          crown: true,
-          compromised: true,
+          targetImpacts: [{ name: "HR Records", compromised: true }],
           tools: ["Metasploit"],
           executedSuccessfully: true,
           outcome: {
@@ -781,7 +777,7 @@ async function seedOperations(ctx: SeedCtx) {
       status: OperationStatus.PLANNING,
       start: new Date("2025-06-01T00:00:00Z"),
       end: null,
-      crownJewels: ["Source Code Repository"],
+      targets: ["Source Code Repository"],
       tags: ["Purple Team"],
       techniques: [
         {
@@ -832,8 +828,8 @@ async function seedOperations(ctx: SeedCtx) {
         endDate: op.end,
         createdById: userId,
         threatActorId: op.threatActor ?? undefined,
-        crownJewels: {
-          connect: op.crownJewels.map((n) => ({ id: crownJewels[n] })),
+        targets: {
+          connect: op.targets.map((n) => ({ id: targets[n] })),
         },
         tags: {
           connect: op.tags.map((n) => ({ id: tags[n] })),
@@ -846,8 +842,20 @@ async function seedOperations(ctx: SeedCtx) {
             endTime: t.end ? new Date(t.end) : null,
             sourceIp: t.source,
             targetSystem: t.target,
-            crownJewelTargeted: Boolean(t.crown),
-            crownJewelCompromised: Boolean(t.compromised),
+            targets: (() => {
+              if (!t.targetImpacts || t.targetImpacts.length === 0) return undefined;
+              const targetLinks = t.targetImpacts
+                .map((impact) => {
+                  const targetId = targets[impact.name];
+                  if (!targetId) return null;
+                  return {
+                    targetId,
+                    wasCompromised: impact.compromised ?? false,
+                  };
+                })
+                .filter((impact): impact is { targetId: string; wasCompromised: boolean } => impact !== null);
+              return targetLinks.length > 0 ? { create: targetLinks } : undefined;
+            })(),
             mitreTechnique: { connect: { id: t.mitre } },
             tools: { connect: t.tools.map((n) => ({ id: tools[n] })) },
             executedSuccessfully: t.executedSuccessfully ?? undefined,

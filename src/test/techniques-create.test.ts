@@ -25,9 +25,8 @@ const createTechniqueData = {
   endTime: new Date("2024-01-01T11:00:00Z"),
   sourceIp: "192.168.1.100",
   targetSystem: "workstation-01",
-  crownJewelTargeted: true,
-  crownJewelCompromised: false,
   toolIds: ["tool-1"],
+  targets: [{ targetId: "target-1", wasCompromised: false }],
 };
 
 function mockCreateTechniqueDependencies() {
@@ -46,6 +45,7 @@ describe("Techniques Router — create", () => {
       createdById: "user-1",
       visibility: "EVERYONE",
       accessGroups: [],
+      targets: [],
     });
   });
 
@@ -59,6 +59,7 @@ describe("Techniques Router — create", () => {
       createdById: "user-1",
       visibility: "EVERYONE",
       accessGroups: [],
+      targets: [{ id: "target-1" }],
     });
     mockCreateTechniqueDependencies();
 
@@ -76,6 +77,7 @@ describe("Techniques Router — create", () => {
       createdById: "user-1",
       visibility: "EVERYONE",
       accessGroups: [],
+      targets: [{ id: "target-1" }],
     });
     mockCreateTechniqueDependencies();
 
@@ -95,9 +97,9 @@ describe("Techniques Router — create", () => {
   it("should throw error if MITRE technique not found", async () => {
     const ctx = createTestContext(mockDb, "OPERATOR");
     const caller = techniquesRouter.createCaller(ctx);
-    mockDb.operation.findUnique.mockResolvedValue({ id: 1, createdById: "user-1", visibility: "EVERYONE", accessGroups: [] });
+    mockDb.operation.findUnique.mockResolvedValue({ id: 1, createdById: "user-1", visibility: "EVERYONE", accessGroups: [], targets: [] });
     mockDb.mitreTechnique.findUnique.mockResolvedValue(null);
-    await expect(caller.create(createTechniqueData)).rejects.toThrow(
+    await expect(caller.create({ ...createTechniqueData, targets: [] })).rejects.toThrow(
       new TRPCError({ code: "BAD_REQUEST", message: "MITRE technique not found" }),
     );
   });
@@ -105,10 +107,10 @@ describe("Techniques Router — create", () => {
   it("should throw error if MITRE sub-technique not found", async () => {
     const ctx = createTestContext(mockDb, "OPERATOR");
     const caller = techniquesRouter.createCaller(ctx);
-    mockDb.operation.findUnique.mockResolvedValue({ id: 1, createdById: "user-1", visibility: "EVERYONE", accessGroups: [] });
+    mockDb.operation.findUnique.mockResolvedValue({ id: 1, createdById: "user-1", visibility: "EVERYONE", accessGroups: [], targets: [] });
     mockDb.mitreTechnique.findUnique.mockResolvedValue({ id: "T1566" });
     mockDb.mitreSubTechnique.findUnique.mockResolvedValue(null);
-    await expect(caller.create(createTechniqueData)).rejects.toThrow(
+    await expect(caller.create({ ...createTechniqueData, targets: [] })).rejects.toThrow(
       new TRPCError({ code: "BAD_REQUEST", message: "MITRE sub-technique not found" }),
     );
   });

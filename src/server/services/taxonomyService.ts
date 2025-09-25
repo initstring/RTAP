@@ -1,25 +1,33 @@
 import { TRPCError } from "@trpc/server";
 import type { PrismaClient, ToolType } from "@prisma/client";
 
-// Crown Jewels
-export type CreateCrownJewelDTO = { name: string; description: string };
-export type UpdateCrownJewelDTO = { id: string; name?: string; description?: string };
+// Targets (general assets, optionally marked as crown jewels)
+export type CreateTargetDTO = { name: string; description: string; isCrownJewel?: boolean };
+export type UpdateTargetDTO = { id: string; name?: string; description?: string; isCrownJewel?: boolean };
 
-export async function createCrownJewel(db: PrismaClient, dto: CreateCrownJewelDTO) {
-  return db.crownJewel.create({ data: dto });
+export async function createTarget(db: PrismaClient, dto: CreateTargetDTO) {
+  return db.target.create({ data: { ...dto, isCrownJewel: dto.isCrownJewel ?? false } });
 }
 
-export async function updateCrownJewel(db: PrismaClient, dto: UpdateCrownJewelDTO) {
+export async function updateTarget(db: PrismaClient, dto: UpdateTargetDTO) {
   const { id, ...data } = dto;
-  return db.crownJewel.update({ where: { id }, data });
+  return db.target.update({ where: { id }, data });
 }
 
-export async function deleteCrownJewel(db: PrismaClient, id: string) {
-  const operationsCount = await db.operation.count({ where: { crownJewels: { some: { id } } } });
-  if (operationsCount > 0) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: `Cannot delete crown jewel: ${operationsCount} operation(s) are using this crown jewel` });
+export async function deleteTarget(db: PrismaClient, id: string) {
+  const [operationsCount, techniqueCount] = await Promise.all([
+    db.operation.count({ where: { targets: { some: { id } } } }),
+    db.techniqueTarget.count({ where: { targetId: id } }),
+  ]);
+
+  const usageTotal = operationsCount + techniqueCount;
+  if (usageTotal > 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Cannot delete target: currently referenced by ${operationsCount} operation(s) and ${techniqueCount} technique(s)`,
+    });
   }
-  return db.crownJewel.delete({ where: { id } });
+  return db.target.delete({ where: { id } });
 }
 
 // Tags
@@ -118,4 +126,3 @@ export async function deleteLogSource(db: PrismaClient, id: string) {
   }
   return db.logSource.delete({ where: { id } });
 }
-

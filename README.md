@@ -4,8 +4,8 @@ _This is an experiment in creating something useful with AI coding agents. The i
 
 The Red Team Assessment Platform (RTAP) is built for internal Red Teams to plan and analyze their operations. The features and functionality are designed with their specific needs in mind, such as:
 
-- Integrating the concept of threat actors and crown jewels into all operations - who is being emulated, what is being targeted, and how is that trending over time?
-- Producing visually appealing artifacts from individual operations, such as attack heatmaps and interactive flow charts that allow the operator to design meaningful attack narratives.
+- Integrating the concept of threat actors and crown jewels into operations - who is being emulated, what is being targeted, and how is that trending over time?
+- Producing visually appealing artifacts from individual operations, such as attack heatmaps, interactive flow charts, and timelines that allow the operator to design meaningful attack narratives.
 - Tracking defensive outcomes in the context of full-scale Red Team operations - not just detection and prevention but also attribution, including log sources and timing.
 - Deep integration into MITRE ATT&CK and STIX 2.1 standards - including importing attack campaigns and threat actor profiles directly from MITRE or from other STIX-based threat intelligence sources.
 - RBAC with group restrictions, allowing teams to work on operation planning in stealth before providing visibility to other platform users.

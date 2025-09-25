@@ -82,7 +82,7 @@ function buildMarkdown(operation: Operation) {
     "## Operation Overview",
     "![Operation Overview](overview.png)",
     `- Threat Actor: ${operation.threatActor?.name ?? "N/A"}`,
-    `- Crown Jewels: ${operation.crownJewels.map(c => c.name).join(', ') || "N/A"}`,
+    `- Targets: ${operation.targets.map(target => target.isCrownJewel ? `${target.name} (CJ)` : target.name).join(', ') || "N/A"}`,
     `- Detection Success Rate: ${detectionStats.successRate}% (${detectionStats.successes}/${detectionStats.attempts})`,
     `- Prevention Success Rate: ${preventionStats.successRate}% (${preventionStats.successes}/${preventionStats.attempts})`,
     `- Attribution Success Rate: ${attributionStats.successRate}% (${attributionStats.successes}/${attributionStats.attempts})`,
@@ -148,4 +148,3 @@ export async function exportOperationReport({
   a.click();
   URL.revokeObjectURL(url);
 }
-

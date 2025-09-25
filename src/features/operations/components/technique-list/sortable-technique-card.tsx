@@ -7,7 +7,7 @@ import { Card, CardContent } from "@components/ui/card";
 import { Badge } from "@components/ui/badge";
 import ConfirmModal from "@components/ui/confirm-modal";
 import InlineActions from "@components/ui/inline-actions";
-import { GripVertical, Clock, CheckCircle, Eye, Shield, UserCheck, X } from "lucide-react";
+import { GripVertical, Clock, CheckCircle, Eye, Shield, Target as TargetIcon, UserCheck, X } from "lucide-react";
 import { api, type RouterOutputs } from "@/trpc/react";
 
 type Operation = RouterOutputs["operations"]["getById"];
@@ -64,6 +64,12 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
   const detectionStatus = getStatusLabel(detectionOutcome, "DETECTION");
   const preventionStatus = getStatusLabel(preventionOutcome, "PREVENTION");
   const attributionStatus = getStatusLabel(attributionOutcome, "ATTRIBUTION");
+
+  const techniqueTargets = technique.targets ?? [];
+  const compromisedTargets = techniqueTargets.filter((assignment) => assignment.wasCompromised);
+  const crownJewelAssignments = techniqueTargets.filter((assignment) => assignment.target?.isCrownJewel);
+  const hasCrownJewelTarget = crownJewelAssignments.length > 0;
+  const crownJewelCompromised = crownJewelAssignments.some((assignment) => assignment.wasCompromised);
 
   return (
     <div ref={setNodeRef} style={style} className={`${isDragging ? "opacity-50" : ""}`}>
@@ -135,7 +141,40 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
+              {techniqueTargets.length > 0 && (
+                <div className="mt-4 space-y-2 text-xs">
+                  <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
+                    <TargetIcon className="w-3 h-3" />
+                    <span>{techniqueTargets.length === 1 ? "1 target engaged" : `${techniqueTargets.length} targets engaged`}</span>
+                    {compromisedTargets.length > 0 && (
+                      <span className="text-[var(--color-error)]">
+                        {compromisedTargets.length === 1
+                          ? "1 compromised"
+                          : `${compromisedTargets.length} compromised`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {techniqueTargets.map((assignment) => (
+                      <Badge key={assignment.targetId} variant="secondary" className="flex items-center gap-2">
+                        <span>{assignment.target?.name ?? "Unknown Target"}</span>
+                        {assignment.target?.isCrownJewel && (
+                          <span className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-1 text-[0.65rem] uppercase tracking-wide text-[var(--color-text-muted)]">
+                            CJ
+                          </span>
+                        )}
+                        {assignment.wasCompromised && (
+                          <span className="text-[0.65rem] uppercase tracking-wide text-[var(--color-error)]">
+                            Compromised
+                          </span>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center gap-4 flex-wrap">
                 {detectionStatus !== "N/A" && (
                   <div className="flex items-center gap-1.5 text-xs">
                     <Eye className="w-3 h-3" />
@@ -182,9 +221,9 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
                 )}
 
                 <div className="ml-auto flex items-center gap-2">
-                  {technique.crownJewelTargeted && (
-                    <Badge variant={technique.crownJewelCompromised ? "error" : "secondary"} className="text-xs">
-                      {technique.crownJewelCompromised ? "Crown Jewel Compromised" : "Crown Jewel Targeted"}
+                  {hasCrownJewelTarget && (
+                    <Badge variant={crownJewelCompromised ? "error" : "secondary"} className="text-xs">
+                      {crownJewelCompromised ? "Crown Jewel Compromised" : "Crown Jewel Targeted"}
                     </Badge>
                   )}
                 </div>
@@ -209,4 +248,3 @@ export default function SortableTechniqueCard({ technique, onEdit, canEdit }: So
     </div>
   );
 }
-

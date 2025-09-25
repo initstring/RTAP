@@ -15,7 +15,7 @@ const clearUserData = async (tx: Prisma.TransactionClient) => {
   await tx.toolCategory.deleteMany();
   await tx.logSource.deleteMany();
   await tx.tag.deleteMany();
-  await tx.crownJewel.deleteMany();
+  await tx.target.deleteMany();
   await tx.threatActor.deleteMany();
 };
 
@@ -26,10 +26,11 @@ const threatActorSchema = z.object({
   topThreat: z.boolean().optional(),
 });
 
-const crownJewelSchema = z.object({
+const targetSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   description: z.string(),
+  isCrownJewel: z.boolean().optional(),
 });
 
 const tagSchema = z.object({
@@ -68,7 +69,7 @@ const operationSchema = z.object({
   createdById: z.string(),
   threatActorId: z.string().optional().nullable(),
   tags: z.array(z.object({ id: z.string() })).optional(),
-  crownJewels: z.array(z.object({ id: z.string() })).optional(),
+  targets: z.array(z.object({ id: z.string() })).optional(),
   visibility: z.enum(["EVERYONE", "GROUPS_ONLY"]).optional(),
 });
 
@@ -80,13 +81,19 @@ const techniqueSchema = z.object({
   endTime: z.coerce.date().optional().nullable(),
   sourceIp: z.string().optional().nullable(),
   targetSystem: z.string().optional().nullable(),
-  crownJewelTargeted: z.boolean().optional(),
-  crownJewelCompromised: z.boolean().optional(),
   executedSuccessfully: z.boolean().optional().nullable(),
   operationId: z.number(),
   mitreTechniqueId: z.string().optional().nullable(),
   mitreSubTechniqueId: z.string().optional().nullable(),
   tools: z.array(z.object({ id: z.string() })).optional(),
+  targets: z
+    .array(
+      z.object({
+        targetId: z.string(),
+        wasCompromised: z.boolean().optional(),
+      }),
+    )
+    .optional(),
 });
 
 const outcomeSchema = z.object({
@@ -116,7 +123,7 @@ const threatActorTechniqueLinkSchema = z.object({
 
 const backupPayloadSchema = z.object({
   threatActors: z.array(threatActorSchema).optional(),
-  crownJewels: z.array(crownJewelSchema).optional(),
+  targets: z.array(targetSchema).optional(),
   tags: z.array(tagSchema).optional(),
   toolCategories: z.array(toolCategorySchema).optional(),
   tools: z.array(toolSchema).optional(),
@@ -143,7 +150,7 @@ export const dataRouter = createTRPCRouter({
       techniqueCount,
       outcomeCount,
       threatActorCount,
-      crownJewelCount,
+      targetCount,
       tagCount,
       toolCount,
       logSourceCount,
@@ -152,7 +159,7 @@ export const dataRouter = createTRPCRouter({
       db.technique.count(),
       db.outcome.count(),
       db.threatActor.count(),
-      db.crownJewel.count(),
+      db.target.count(),
       db.tag.count(),
       db.tool.count(),
       db.logSource.count(),
@@ -163,7 +170,7 @@ export const dataRouter = createTRPCRouter({
       techniques: techniqueCount,
       outcomes: outcomeCount,
       threatActors: threatActorCount,
-      crownJewels: crownJewelCount,
+      targets: targetCount,
       tags: tagCount,
       tools: toolCount,
       logSources: logSourceCount,
@@ -175,7 +182,7 @@ export const dataRouter = createTRPCRouter({
 
     try {
       const [
-        crownJewels,
+        targets,
         tags,
         toolCategories,
         tools,
@@ -185,7 +192,7 @@ export const dataRouter = createTRPCRouter({
         outcomes,
         attackFlowLayouts,
       ] = await Promise.all([
-        db.crownJewel.findMany(),
+        db.target.findMany(),
         db.tag.findMany(),
         db.toolCategory.findMany(),
         db.tool.findMany(),
@@ -193,12 +200,13 @@ export const dataRouter = createTRPCRouter({
         db.operation.findMany({
           include: {
             tags: { select: { id: true } },
-            crownJewels: { select: { id: true } },
+            targets: { select: { id: true } },
           },
         }),
         db.technique.findMany({
           include: {
             tools: { select: { id: true } },
+            targets: { select: { targetId: true, wasCompromised: true } },
           },
         }),
         db.outcome.findMany({
@@ -228,7 +236,7 @@ export const dataRouter = createTRPCRouter({
           timestamp: new Date().toISOString(),
           data: {
             threatActors,
-            crownJewels,
+            targets,
             tags,
             toolCategories,
             tools,
@@ -281,8 +289,13 @@ export const dataRouter = createTRPCRouter({
           if (payload.threatActors?.length) {
             await tx.threatActor.createMany({ data: payload.threatActors });
           }
-          if (payload.crownJewels?.length) {
-            await tx.crownJewel.createMany({ data: payload.crownJewels });
+          if (payload.targets?.length) {
+            await tx.target.createMany({
+              data: payload.targets.map((target) => ({
+                ...target,
+                isCrownJewel: target.isCrownJewel ?? false,
+              })),
+            });
           }
           if (payload.tags?.length) {
             await tx.tag.createMany({ data: payload.tags });
@@ -298,7 +311,7 @@ export const dataRouter = createTRPCRouter({
           }
 
           for (const op of payload.operations ?? []) {
-            const { tags: opTags = [], crownJewels: opCrownJewels = [], ...operationFields } = op;
+            const { tags: opTags = [], targets: opTargets = [], ...operationFields } = op;
 
             await tx.operation.create({
               data: {
@@ -306,18 +319,26 @@ export const dataRouter = createTRPCRouter({
                 // Access groups are not restored; default all operations to everyone-visible.
                 visibility: "EVERYONE",
                 tags: opTags.length ? { connect: opTags.map(({ id }) => ({ id })) } : undefined,
-                crownJewels: opCrownJewels.length ? { connect: opCrownJewels.map(({ id }) => ({ id })) } : undefined,
+                targets: opTargets.length ? { connect: opTargets.map(({ id }) => ({ id })) } : undefined,
               },
             });
           }
 
           for (const technique of payload.techniques ?? []) {
-            const { tools: techniqueTools = [], ...techniqueFields } = technique;
+            const { tools: techniqueTools = [], targets: techniqueTargets = [], ...techniqueFields } = technique;
 
             await tx.technique.create({
               data: {
                 ...techniqueFields,
                 tools: techniqueTools.length ? { connect: techniqueTools.map(({ id }) => ({ id })) } : undefined,
+                targets: techniqueTargets.length
+                  ? {
+                      create: techniqueTargets.map(({ targetId, wasCompromised }) => ({
+                        targetId,
+                        wasCompromised: wasCompromised ?? false,
+                      })),
+                    }
+                  : undefined,
               },
             });
           }

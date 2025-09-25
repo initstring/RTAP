@@ -70,7 +70,7 @@ describe("Import Router", () => {
     mockDb.operation.findFirst.mockResolvedValue(null);
     mockDb.operation.create.mockResolvedValue({ id: 1, name: "Op One" });
     // Service validates existence
-    mockDb.operation.findUnique.mockResolvedValue({ id: 1, visibility: "EVERYONE", accessGroups: [] });
+    mockDb.operation.findUnique.mockResolvedValue({ id: 1, visibility: "EVERYONE", accessGroups: [], targets: [] });
     mockDb.mitreTechnique.findUnique = vi.fn(async ({ where: { id } }: any) => (id === "T4040" ? null : { id }));
     mockDb.mitreSubTechnique.findUnique = vi.fn(async ({ where: { id } }: any) => (id === "T1001.001" ? { id, techniqueId: "T1001" } : null));
     mockDb.technique.findFirst

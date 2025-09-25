@@ -40,14 +40,16 @@ export const scorecardRouter = createTRPCRouter({
             id: true,
             startTime: true,
             executedSuccessfully: true,
-            crownJewelTargeted: true,
-            crownJewelCompromised: true,
             operationId: true,
             operation: { select: { id: true, name: true, threatActorId: true } },
             mitreTechnique: { include: { tactic: true } },
             outcomes: {
               where: { status: { not: OutcomeStatus.NOT_APPLICABLE } },
               select: { type: true, status: true, detectionTime: true },
+            },
+            targets: {
+              where: { target: { isCrownJewel: true } },
+              select: { wasCompromised: true },
             },
           },
         }),
@@ -200,9 +202,9 @@ export const scorecardRouter = createTRPCRouter({
             }
           }
 
-          if (technique.crownJewelTargeted) {
+          if (technique.targets.length > 0) {
             cjAttempts++;
-            if (technique.crownJewelCompromised) {
+            if (technique.targets.some((assignment) => assignment.wasCompromised)) {
               cjSuccesses++;
             }
             crownJewelOperations.add(technique.operationId);

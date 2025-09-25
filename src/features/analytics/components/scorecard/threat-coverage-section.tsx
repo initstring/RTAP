@@ -40,7 +40,7 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
   const { data: threatActors } = api.taxonomy.threatActors.list.useQuery();
-  const { data: crownJewels } = api.taxonomy.crownJewels.list.useQuery();
+  const { data: targets } = api.taxonomy.targets.list.useQuery();
 
   const operations = useMemo(() => {
     const pages = operationsPages?.pages ?? [];
@@ -127,10 +127,10 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
   }, [threatActors, operations, scope]);
 
   const crownJewelStats = useMemo(() => {
-    if (!crownJewels) return [];
+    const crownJewels = targets?.filter((target) => target.isCrownJewel) ?? [];
     return crownJewels.map((jewel) => {
       const targetingOps = operations.filter((op) =>
-        op.crownJewels?.some((cj) => cj.id === jewel.id)
+        op.targets?.some((target) => target.id === jewel.id)
       );
       if (targetingOps.length === 0) {
         return {
@@ -154,7 +154,8 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
       targetingOps.forEach((op) => {
         let compromised = false;
         op.techniques?.forEach((tech) => {
-          if (tech.crownJewelCompromised) compromised = true;
+          const assignments = tech.targets?.filter((assignment) => assignment.targetId === jewel.id) ?? [];
+          if (assignments.some((assignment) => assignment.wasCompromised)) compromised = true;
           tech.outcomes?.forEach((o) => {
             if (o.status === "NOT_APPLICABLE") return;
             if (o.type === "DETECTION") {
@@ -187,7 +188,7 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
         hasData: true,
       };
     });
-  }, [crownJewels, operations]);
+  }, [targets, operations]);
 
   const getRateColor = (rate: number | null) => {
     if (rate === null) return "text-[var(--color-text-muted)]";
@@ -202,7 +203,7 @@ export function ThreatCoverageSection({ start, end, tagIds }: ThreatCoverageSect
     isFetchingNextPage ||
     !operationsPages ||
     !threatActors ||
-    !crownJewels;
+    !targets;
 
   if (isLoading) {
     return (

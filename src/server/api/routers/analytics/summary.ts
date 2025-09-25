@@ -328,7 +328,7 @@ export const summaryRouter = createTRPCRouter({
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - periodDays);
 
-      // Get techniques scoped by operations in range; we only need CJ flags + operation dates
+      // Get techniques scoped by operations in range; include crown jewel target assignments
       const techniques = await ctx.db.technique.findMany({
         where: {
           operation: {
@@ -343,9 +343,12 @@ export const summaryRouter = createTRPCRouter({
           },
         },
         select: {
-          crownJewelTargeted: true,
-          crownJewelCompromised: true,
+          operationId: true,
           operation: { select: { id: true, createdAt: true, startDate: true } },
+          targets: {
+            where: { target: { isCrownJewel: true } },
+            select: { wasCompromised: true },
+          },
         },
       });
 
@@ -362,15 +365,19 @@ export const summaryRouter = createTRPCRouter({
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       };
 
-      techniques.forEach((t) => {
-        const baseDate = new Date(t.operation.startDate ?? t.operation.createdAt);
+      techniques.forEach((technique) => {
+        if (technique.targets.length === 0) return;
+
+        const baseDate = new Date(technique.operation.startDate ?? technique.operation.createdAt);
         const key = makeKey(baseDate);
-        if (!groups.has(key)) groups.set(key, { date: key, attempts: 0, successes: 0, targetedOps: new Set<number>() });
-        const g = groups.get(key)!;
-        if (t.crownJewelTargeted) {
-          g.attempts++;
-          g.targetedOps.add(t.operation.id);
-          if (t.crownJewelCompromised) g.successes++;
+        if (!groups.has(key)) {
+          groups.set(key, { date: key, attempts: 0, successes: 0, targetedOps: new Set<number>() });
+        }
+        const group = groups.get(key)!;
+        group.attempts++;
+        group.targetedOps.add(technique.operationId);
+        if (technique.targets.some((assignment) => assignment.wasCompromised)) {
+          group.successes++;
         }
       });
 
@@ -383,4 +390,3 @@ export const summaryRouter = createTRPCRouter({
       }));
     }),
 });
-

@@ -17,7 +17,7 @@ vi.mock("@/trpc/react", () => {
       taxonomy: {
         threatActors: { list: { useQuery: () => ({ data: [] }) } },
         tags: { list: { useQuery: () => ({ data: [] }) } },
-        crownJewels: { list: { useQuery: () => ({ data: [] }) } },
+        targets: { list: { useQuery: () => ({ data: [] }) } },
       },
       groups: { list: { useQuery: () => ({ data: [] }) } },
       operations: {
@@ -60,7 +60,7 @@ describe("CreateOperationModal status select", () => {
       visibility: "EVERYONE" as OperationVisibility,
       accessGroups: [],
       tags: [],
-      crownJewels: [],
+      targets: [],
       techniques: [],
       createdBy: { id: "user-1", name: "Alice", email: "alice@example.com" },
       threatActor: null,

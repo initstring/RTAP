@@ -1,5 +1,5 @@
 import ThreatActorsTab from "@features/settings/components/threat-actors-tab";
-import CrownJewelsTab from "@features/settings/components/crown-jewels-tab";
+import TargetsTab from "@features/settings/components/targets-tab";
 import TagsTab from "@features/settings/components/tags-tab";
 import ToolCategoriesTab from "@features/settings/components/tool-categories-tab";
 import ToolsTab from "@features/settings/components/tools-tab";
@@ -15,7 +15,7 @@ export default function TaxonomyPage() {
       </div>
 
       <ThreatActorsTab />
-      <CrownJewelsTab />
+      <TargetsTab />
       <TagsTab />
       <ToolCategoriesTab />
       <ToolsTab />

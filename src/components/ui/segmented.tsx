@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { badgeVariants } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface SegmentedOption<T extends string> {
   label: string;
@@ -17,18 +18,21 @@ interface SegmentedProps<T extends string> {
 
 export function Segmented<T extends string>({ options, value, onChange, allowDeselect = false, onDeselect }: SegmentedProps<T>) {
   return (
-    <div className="inline-flex rounded-md bg-[var(--color-surface)] border border-[var(--color-border)]">
-      {options.map((opt, i) => {
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
         const selected = value === opt.value;
         return (
-          <Button
+          <button
             key={opt.value}
-            variant="secondary"
-            size="sm"
-            className={`rounded-none ${i === 0 ? 'rounded-l-md' : ''} ${i === options.length - 1 ? 'rounded-r-md' : ''} ` +
-              (selected
-                ? 'bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)] border border-[var(--color-accent)]'
-                : 'text-[var(--color-text-secondary)]')}
+            type="button"
+            className={cn(
+              badgeVariants({ variant: selected ? "default" : "secondary" }),
+              "px-3 py-1.5 text-sm transition-colors",
+              selected
+                ? "text-[var(--color-text-primary)]"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
+              "focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--color-border)]"
+            )}
             onClick={() => {
               if (allowDeselect && selected) {
                 onDeselect?.();
@@ -36,10 +40,9 @@ export function Segmented<T extends string>({ options, value, onChange, allowDes
               }
               onChange(opt.value);
             }}
-            data-export-include
           >
             {opt.label}
-          </Button>
+          </button>
         );
       })}
     </div>

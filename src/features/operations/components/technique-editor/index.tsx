@@ -96,7 +96,6 @@ export default function TechniqueEditorModal({
   const formHook = useTechniqueEditorForm({
     operationId,
     existingTechnique: isEditMode ? existingTechnique : undefined,
-    crownJewels: operation?.crownJewels,
     onSuccess,
     onClose,
   });
@@ -284,11 +283,35 @@ export default function TechniqueEditorModal({
 
   const startTimeValue = form.watch("startTime") ?? "";
   const hasExecutionStart = Boolean(startTimeValue.trim());
-  const cjRaw = form.watch("crownJewelAccess") ?? "";
-  const cjAccess: "" | "yes" | "no" = cjRaw === "yes" ? "yes" : cjRaw === "no" ? "no" : "";
+  const targetAssignments = (form.watch("targetAssignments") ?? []).map((assignment) => ({
+    targetId: assignment.targetId,
+    wasCompromised: assignment.wasCompromised ?? false,
+  }));
+  const selectedTargetIds = targetAssignments.map((assignment) => assignment.targetId);
   const execRaw = form.watch("executionSuccess") ?? "";
   const execSuccess: "" | "yes" | "no" = execRaw === "yes" ? "yes" : execRaw === "no" ? "no" : "";
   const isFormValid = Boolean(selectedTechnique) && form.formState.isValid;
+
+  const handleTargetSelectionChange = (ids: string[]) => {
+    const currentAssignments = (form.getValues("targetAssignments") ?? []).map((assignment) => ({
+      targetId: assignment.targetId,
+      wasCompromised: assignment.wasCompromised ?? false,
+    }));
+    const assignmentMap = new Map(currentAssignments.map((assignment) => [assignment.targetId, assignment]));
+    const nextAssignments = ids.map((targetId) => assignmentMap.get(targetId) ?? { targetId, wasCompromised: false });
+    form.setValue("targetAssignments", nextAssignments, { shouldDirty: true });
+  };
+
+  const handleTargetOutcomeChange = (targetId: string, wasCompromised: boolean) => {
+    const currentAssignments = (form.getValues("targetAssignments") ?? []).map((assignment) => ({
+      targetId: assignment.targetId,
+      wasCompromised: assignment.wasCompromised ?? false,
+    }));
+    const nextAssignments = currentAssignments.map((assignment) =>
+      assignment.targetId === targetId ? { ...assignment, wasCompromised } : assignment,
+    );
+    form.setValue("targetAssignments", nextAssignments, { shouldDirty: true });
+  };
 
   useEffect(() => {
     if (hasExecutionStart) return;
@@ -385,11 +408,16 @@ export default function TechniqueEditorModal({
                   offensiveTools={offensiveTools.map(t => ({ id: t.id, name: t.name }))}
                   selectedOffensiveToolIds={form.watch("offensiveToolIds")}
                   onOffensiveToolIdsChange={(ids) => form.setValue("offensiveToolIds", ids, { shouldDirty: true })}
-                  crownJewels={operation?.crownJewels?.map((cj) => ({ id: cj.id, name: cj.name, description: cj.description ?? "" }))}
-                  selectedCrownJewelIds={form.watch("selectedCrownJewelIds")}
-                  onCrownJewelIdsChange={(ids) => form.setValue("selectedCrownJewelIds", ids, { shouldDirty: true })}
-                  crownJewelAccess={cjAccess}
-                  onCrownJewelAccessChange={(value) => form.setValue("crownJewelAccess", value as "" | "yes" | "no", { shouldDirty: true })}
+                  targets={operation?.targets?.map((target) => ({
+                    id: target.id,
+                    name: target.name,
+                    description: target.description ?? "",
+                    isCrownJewel: target.isCrownJewel,
+                  })) ?? []}
+                  selectedTargetIds={selectedTargetIds}
+                  onTargetSelectionChange={handleTargetSelectionChange}
+                  targetAssignments={targetAssignments}
+                  onTargetOutcomeChange={handleTargetOutcomeChange}
                   executionSuccess={execSuccess}
                   onExecutionSuccessChange={(value) => form.setValue("executionSuccess", value as "" | "yes" | "no", { shouldDirty: true })}
                 />

@@ -2,10 +2,11 @@
 
 /**
  * ExecutionSection
- * Timing, source/target details, offensive tools, crown jewel targeting.
+ * Timing, source/target details, offensive tools, and per-target outcomes.
  */
 
 import { Badge, Input, Label, TimeRangePicker } from "@/components/ui";
+import { Segmented } from "@/components/ui/segmented";
 import TaxonomySelector from "./taxonomy-selector";
 import { Clock, Wrench } from "lucide-react";
 
@@ -27,12 +28,12 @@ export interface ExecutionSectionProps {
   selectedOffensiveToolIds: string[];
   onOffensiveToolIdsChange: (ids: string[]) => void;
 
-  // Crown jewels
-  crownJewels: Array<{ id: string; name: string; description: string }> | undefined;
-  selectedCrownJewelIds: string[];
-  onCrownJewelIdsChange: (ids: string[]) => void;
-  crownJewelAccess: string; // "yes" | "no" | ""
-  onCrownJewelAccessChange: (value: string) => void;
+  // Targets
+  targets: Array<{ id: string; name: string; description: string; isCrownJewel: boolean }>;
+  selectedTargetIds: string[];
+  onTargetSelectionChange: (ids: string[]) => void;
+  targetAssignments: Array<{ targetId: string; wasCompromised: boolean }>;
+  onTargetOutcomeChange: (targetId: string, wasCompromised: boolean) => void;
   executionSuccess: string; // "yes" | "no" | ""
   onExecutionSuccessChange: (value: string) => void;
 }
@@ -50,14 +51,26 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
     offensiveTools,
     selectedOffensiveToolIds,
     onOffensiveToolIdsChange,
-    crownJewels,
-    selectedCrownJewelIds,
-    onCrownJewelIdsChange,
-    crownJewelAccess,
-    onCrownJewelAccessChange,
+    targets,
+    selectedTargetIds,
+    onTargetSelectionChange,
+    targetAssignments,
+    onTargetOutcomeChange,
     executionSuccess,
     onExecutionSuccessChange,
   } = props;
+
+  const assignmentMap = new Map(targetAssignments.map((assignment) => [assignment.targetId, assignment.wasCompromised]));
+  const selectedTargets = selectedTargetIds
+    .map((id) => {
+      const target = targets.find((t) => t.id === id);
+      if (!target) return null;
+      return {
+        ...target,
+        wasCompromised: assignmentMap.get(id) ?? false,
+      };
+    })
+    .filter((target): target is { id: string; name: string; description: string; isCrownJewel: boolean; wasCompromised: boolean } => Boolean(target));
 
   return (
     <div className="space-y-6">
@@ -135,35 +148,43 @@ export default function ExecutionSection(props: ExecutionSectionProps) {
 
       <div>
         <TaxonomySelector
-          variant="crown-jewels"
-          items={crownJewels ?? []}
-          selectedIds={selectedCrownJewelIds}
-          onSelectionChange={onCrownJewelIdsChange}
-          label="Crown Jewel Targeting"
-          description="Select crown jewels this technique targeted:"
+          variant="targets"
+          items={targets}
+          selectedIds={selectedTargetIds}
+          onSelectionChange={onTargetSelectionChange}
+          label="Targets"
+          description="Select the assets this technique touched."
           compactHeader
           searchable={false}
-          multiple={true}
+          multiple
         />
 
-        {selectedCrownJewelIds.length > 0 && (
-          <div className="space-y-2 mt-4">
-            <Label htmlFor="crownJewelAccess">Successfully Accessed Crown Jewels</Label>
-            <div className="flex items-center gap-2">
-              {(["yes", "no"] as const).map(opt => {
-                const selected = crownJewelAccess === opt;
-                return (
-                  <Badge
-                    key={opt}
-                    variant={selected ? "default" : "secondary"}
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => onCrownJewelAccessChange(selected ? "" : opt)}
-                  >
-                    {opt === "yes" ? "Yes" : "No"}
-                  </Badge>
-                );
-              })}
-            </div>
+        {selectedTargets.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {selectedTargets.map((target) => (
+              <div
+                key={target.id}
+                className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-elevated)]"
+              >
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    {target.name}
+                    {target.isCrownJewel && <Badge variant="outline" className="text-[0.65rem] uppercase tracking-wide">Crown Jewel</Badge>}
+                  </div>
+                  {target.description && (
+                    <p className="text-xs text-[var(--color-text-muted)] mt-1">{target.description}</p>
+                  )}
+                </div>
+                <Segmented
+                  options={[
+                    { label: "Not Compromised", value: "no" },
+                    { label: "Compromised", value: "yes" },
+                  ]}
+                  value={target.wasCompromised ? "yes" : "no"}
+                  onChange={(value) => onTargetOutcomeChange(target.id, value === "yes")}
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>

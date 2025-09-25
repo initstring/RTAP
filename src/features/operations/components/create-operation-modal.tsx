@@ -29,7 +29,7 @@ const OperationFormSchema = z
     startDate: z.string().optional(),
     endDate: z.string().optional(),
     tagIds: z.array(z.string()).optional(),
-    crownJewelIds: z.array(z.string()).optional(),
+    targetIds: z.array(z.string()).optional(),
     visibility: z.nativeEnum(OperationVisibility),
     accessGroupIds: z.array(z.string()).optional(),
   })
@@ -73,7 +73,7 @@ function buildDefaultValues(operation?: Operation): OperationFormValues {
     startDate: formatDateForInput(operation?.startDate),
     endDate: formatDateForInput(operation?.endDate),
     tagIds: operation?.tags.map((tag) => tag.id) ?? [],
-    crownJewelIds: operation?.crownJewels.map((cj) => cj.id) ?? [],
+    targetIds: operation?.targets.map((target) => target.id) ?? [],
     visibility: operation?.visibility ?? OperationVisibility.EVERYONE,
     accessGroupIds: operation?.accessGroups?.map(({ group }) => group.id) ?? [],
   };
@@ -108,7 +108,7 @@ export default function CreateOperationModal({ isOpen, onClose, onSuccess, opera
 
   const visibility = watch("visibility");
   const selectedTagIds = watch("tagIds") ?? [];
-  const selectedCrownJewelIds = watch("crownJewelIds") ?? [];
+  const selectedTargetIds = watch("targetIds") ?? [];
   const selectedGroupIds = watch("accessGroupIds") ?? [];
 
   useEffect(() => {
@@ -119,12 +119,12 @@ export default function CreateOperationModal({ isOpen, onClose, onSuccess, opera
 
   const { data: threatActorsData } = api.taxonomy.threatActors.list.useQuery();
   const { data: tagsData } = api.taxonomy.tags.list.useQuery();
-  const { data: crownJewelsData } = api.taxonomy.crownJewels.list.useQuery();
+  const { data: targetsData } = api.taxonomy.targets.list.useQuery();
   const { data: groupsData } = api.groups.list.useQuery();
 
   const threatActors = threatActorsData ?? [];
   const tags = tagsData ?? [];
-  const crownJewels = crownJewelsData ?? [];
+  const targets = targetsData ?? [];
   const groups = groupsData ?? [];
 
   const utils = api.useUtils();
@@ -168,7 +168,7 @@ export default function CreateOperationModal({ isOpen, onClose, onSuccess, opera
       startDate: values.startDate ? new Date(values.startDate) : undefined,
       endDate: values.endDate ? new Date(values.endDate) : undefined,
       tagIds: values.tagIds ?? [],
-      crownJewelIds: values.crownJewelIds ?? [],
+      targetIds: values.targetIds ?? [],
       visibility: values.visibility,
       accessGroupIds: values.visibility === OperationVisibility.GROUPS_ONLY ? values.accessGroupIds ?? [] : [],
     };
@@ -371,14 +371,14 @@ export default function CreateOperationModal({ isOpen, onClose, onSuccess, opera
               </div>
             </div>
 
-            {/* Crown Jewels Selection */}
+            {/* Targets Selection */}
             <TaxonomySelector
-              variant="crown-jewels"
-              items={crownJewels}
-              selectedIds={selectedCrownJewelIds}
-              onSelectionChange={(ids) => setValue("crownJewelIds", ids, { shouldDirty: true })}
-              label="Crown Jewels Targeting"
-              description="Select crown jewels this operation will target:"
+              variant="targets"
+              items={targets}
+              selectedIds={selectedTargetIds}
+              onSelectionChange={(ids) => setValue("targetIds", ids, { shouldDirty: true })}
+              label="Planned Targets"
+              description="Select assets this operation plans to target:"
               searchable
               multiple
             />

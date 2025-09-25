@@ -12,7 +12,7 @@ vi.mock("@/server/db", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    crownJewel: {
+    target: {
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -40,6 +40,9 @@ vi.mock("@/server/db", () => ({
       count: vi.fn(),
     },
     technique: {
+      count: vi.fn(),
+    },
+    techniqueTarget: {
       count: vi.fn(),
     },
     outcome: {
@@ -219,28 +222,27 @@ describe("Taxonomy Router", () => {
     });
   });
 
-  describe("Crown Jewels", () => {
+  describe("Targets", () => {
     describe("create", () => {
-      it("should create crown jewel", async () => {
-        const newCrownJewel = {
+      it("should create target with default non-crown jewel flag", async () => {
+        const newTarget = {
           name: "Customer Database",
           description: "Primary customer data store",
         };
 
-        const mockCreatedCrownJewel = { id: "cj-1", ...newCrownJewel };
-        mockDb.crownJewel.create.mockResolvedValue(mockCreatedCrownJewel);
+        const mockCreatedTarget = { id: "target-1", ...newTarget, isCrownJewel: false };
+        mockDb.target.create.mockResolvedValue(mockCreatedTarget);
 
         const ctx = createMockContext(UserRole.ADMIN);
         const caller = taxonomyRouter.createCaller(ctx);
 
-        const result = await caller.crownJewels.create(newCrownJewel);
+        const result = await caller.targets.create(newTarget);
 
-        expect(result).toEqual(mockCreatedCrownJewel);
-        expect(mockDb.crownJewel.create).toHaveBeenCalledWith({
-          data: newCrownJewel,
+        expect(result).toEqual(mockCreatedTarget);
+        expect(mockDb.target.create).toHaveBeenCalledWith({
+          data: { ...newTarget, isCrownJewel: false },
         });
       });
-
     });
   });
 
@@ -408,7 +410,7 @@ describe("Taxonomy Router", () => {
         ).rejects.toThrow(new TRPCError({ code: "FORBIDDEN", message: "Admin access required" }));
 
         await expect(
-          caller.crownJewels.create({ name: "Test", description: "Test" })
+          caller.targets.create({ name: "Test", description: "Test" })
         ).rejects.toThrow(new TRPCError({ code: "FORBIDDEN", message: "Admin access required" }));
 
         await expect(

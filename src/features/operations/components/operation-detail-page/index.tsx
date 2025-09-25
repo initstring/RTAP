@@ -89,6 +89,25 @@ export default function OperationDetailPage({ operationId }: Props) {
   const preventionStats = outcomeMetrics[OutcomeType.PREVENTION];
   const attributionStats = outcomeMetrics[OutcomeType.ATTRIBUTION];
 
+  const engagementMap = new Map<string, { name: string; isCrownJewel: boolean; compromised: boolean }>();
+  (operation.techniques ?? []).forEach((technique) => {
+    (technique.targets ?? []).forEach((assignment) => {
+      if (!assignment.target) return;
+      const existing = engagementMap.get(assignment.targetId);
+      if (existing) {
+        existing.compromised = existing.compromised || assignment.wasCompromised;
+      } else {
+        engagementMap.set(assignment.targetId, {
+          name: assignment.target.name,
+          isCrownJewel: assignment.target.isCrownJewel,
+          compromised: assignment.wasCompromised ?? false,
+        });
+      }
+    });
+  });
+  const engagedTargets = Array.from(engagementMap.entries()).map(([id, data]) => ({ id, ...data }));
+  const compromisedIds = new Set(engagedTargets.filter((target) => target.compromised).map((target) => target.id));
+
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
@@ -143,15 +162,36 @@ export default function OperationDetailPage({ operationId }: Props) {
                     {operation.threatActor?.name ?? 'None'}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-[var(--color-text-muted)]" />
-                  <span className="text-[var(--color-text-muted)]">Targeting:</span>
-                  <span className="text-[var(--color-text-primary)]">
-                    {operation.crownJewels.length > 0
-                      ? operation.crownJewels.map(cj => cj.name).join(', ')
-                      : 'General Infrastructure'
-                    }
-                  </span>
+                <div className="flex items-start gap-2">
+                  <Target className="w-4 h-4 text-[var(--color-text-muted)] mt-0.5" />
+                  <div>
+                    <span className="text-[var(--color-text-muted)] block">Targets</span>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {operation.targets.length > 0 ? (
+                        operation.targets.map((target) => (
+                          <Badge
+                            key={target.id}
+                            variant="secondary"
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <span className="text-[var(--color-text-primary)]">{target.name}</span>
+                            {target.isCrownJewel && (
+                              <span className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-1 uppercase tracking-wide text-[0.6rem] text-[var(--color-text-muted)]">
+                                CJ
+                              </span>
+                            )}
+                            {compromisedIds.has(target.id) && (
+                              <span className="text-[0.6rem] uppercase tracking-wide text-[var(--color-error)]">
+                                Compromised
+                              </span>
+                            )}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-[var(--color-text-primary)]">General Infrastructure</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

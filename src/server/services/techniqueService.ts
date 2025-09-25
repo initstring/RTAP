@@ -10,6 +10,11 @@ export async function getNextTechniqueSortOrder(db: PrismaClient, operationId: n
   return (last?.sortOrder ?? -1) + 1;
 }
 
+export interface TechniqueTargetAssignment {
+  targetId: string;
+  wasCompromised?: boolean;
+}
+
 export interface TechniqueCreateInput {
   operationId: number;
   description: string;
@@ -19,18 +24,73 @@ export interface TechniqueCreateInput {
   endTime?: Date | null;
   sourceIp?: string;
   targetSystem?: string;
-  crownJewelTargeted?: boolean;
-  crownJewelCompromised?: boolean;
   executedSuccessfully?: boolean | null;
   toolIds?: string[];
+  targets?: TechniqueTargetAssignment[];
+}
+
+export function normalizeTechniqueTargetAssignments(assignments?: TechniqueTargetAssignment[]): TechniqueTargetAssignment[] {
+  if (!assignments || assignments.length === 0) return [];
+
+  const unique = new Map<string, TechniqueTargetAssignment>();
+  for (const assignment of assignments) {
+    const trimmedId = assignment.targetId.trim();
+    if (!trimmedId) continue;
+    if (!unique.has(trimmedId)) {
+      unique.set(trimmedId, { targetId: trimmedId, wasCompromised: assignment.wasCompromised ?? false });
+    } else {
+      // If duplicate provided, retain a true compromised flag when any assignment reports it
+      const existing = unique.get(trimmedId)!;
+      if (assignment.wasCompromised) {
+        existing.wasCompromised = true;
+      }
+    }
+  }
+  return Array.from(unique.values());
+}
+
+export async function ensureTargetsAssignableToOperation(
+  db: PrismaClient,
+  operationId: number,
+  assignments: TechniqueTargetAssignment[],
+  existingOperationTargetIds?: string[],
+) {
+  if (assignments.length === 0) {
+    return;
+  }
+
+  const allowedIds = new Set(existingOperationTargetIds ?? []);
+  if (allowedIds.size === 0) {
+    const operationTargets = await db.operation.findUnique({
+      where: { id: operationId },
+      select: { targets: { select: { id: true } } },
+    });
+    for (const target of operationTargets?.targets ?? []) {
+      allowedIds.add(target.id);
+    }
+  }
+
+  const disallowed = assignments.filter((assignment) => !allowedIds.has(assignment.targetId));
+  if (disallowed.length > 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Targets must be associated to the operation before assigning them to a technique",
+    });
+  }
 }
 
 export async function createTechniqueWithValidations(db: PrismaClient, input: TechniqueCreateInput) {
   // Verify operation exists
-  const operation = await db.operation.findUnique({ where: { id: input.operationId } });
+  const operation = await db.operation.findUnique({
+    where: { id: input.operationId },
+    include: { targets: { select: { id: true } } },
+  });
   if (!operation) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Operation not found" });
   }
+
+  const normalizedAssignments = normalizeTechniqueTargetAssignments(input.targets);
+  await ensureTargetsAssignableToOperation(db, input.operationId, normalizedAssignments, operation.targets.map((t) => t.id));
 
   // Validate times
   if (input.startTime && input.endTime && input.endTime < input.startTime) {
@@ -76,12 +136,18 @@ export async function createTechniqueWithValidations(db: PrismaClient, input: Te
       endTime: input.endTime ?? undefined,
       sourceIp: input.sourceIp,
       targetSystem: input.targetSystem,
-      crownJewelTargeted: input.crownJewelTargeted ?? false,
-      crownJewelCompromised: input.crownJewelCompromised ?? false,
       executedSuccessfully: input.executedSuccessfully ?? undefined,
       mitreTechniqueId: input.mitreTechniqueId,
       mitreSubTechniqueId: input.mitreSubTechniqueId,
       tools: input.toolIds ? { connect: input.toolIds.map((id) => ({ id })) } : undefined,
+      targets: normalizedAssignments.length
+        ? {
+            create: normalizedAssignments.map(({ targetId, wasCompromised }) => ({
+              targetId,
+              wasCompromised: wasCompromised ?? false,
+            })),
+          }
+        : undefined,
     },
     include: {
       operation: { select: { id: true, name: true } },
@@ -92,6 +158,11 @@ export async function createTechniqueWithValidations(db: PrismaClient, input: Te
         include: {
           tools: true,
           logSources: true,
+        },
+      },
+      targets: {
+        include: {
+          target: true,
         },
       },
     },

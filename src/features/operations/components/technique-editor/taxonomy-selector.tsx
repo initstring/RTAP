@@ -24,8 +24,9 @@ interface TagItem extends TaxonomyItem {
   color: string;
 }
 
-interface CrownJewelItem extends TaxonomyItem {
+interface TargetItem extends TaxonomyItem {
   description: string;
+  isCrownJewel?: boolean;
 }
 
 interface ThreatActorItem extends TaxonomyItem {
@@ -59,8 +60,8 @@ interface TagSelectorProps extends BaseSelectorProps<TagItem> {
   variant: "tags";
 }
 
-interface CrownJewelSelectorProps extends BaseSelectorProps<CrownJewelItem> {
-  variant: "crown-jewels";
+interface TargetSelectorProps extends BaseSelectorProps<TargetItem> {
+  variant: "targets";
 }
 
 interface ThreatActorSelectorProps extends BaseSelectorProps<ThreatActorItem> {
@@ -68,7 +69,7 @@ interface ThreatActorSelectorProps extends BaseSelectorProps<ThreatActorItem> {
   multiple?: false; // Threat actor is typically single selection
 }
 
-type TaxonomySelectorProps = TagSelectorProps | CrownJewelSelectorProps | ThreatActorSelectorProps;
+type TaxonomySelectorProps = TagSelectorProps | TargetSelectorProps | ThreatActorSelectorProps;
 interface ToolsSelectorProps extends BaseSelectorProps<ToolItem> {
   variant: "tools";
 }
@@ -85,11 +86,11 @@ const selectorConfig = {
     emptyMessage: "No tags available",
     searchPlaceholder: "Search tags...",
   },
-  "crown-jewels": {
+  targets: {
     icon: Shield,
-    title: "Crown Jewels",
-    emptyMessage: "No crown jewels available",
-    searchPlaceholder: "Search crown jewels...",
+    title: "Targets",
+    emptyMessage: "No targets available",
+    searchPlaceholder: "Search targets...",
   },
   "threat-actors": {
     icon: Target,
@@ -222,7 +223,7 @@ export default function TaxonomySelector(props: AllSelectorProps) {
     );
   }
 
-  // Render for multiple selection (tags, crown jewels)
+  // Render for multiple selection (tags, targets, etc.)
   return (
     <div className={`space-y-4 ${className}`}>
       {compactHeader ? (
@@ -302,18 +303,27 @@ export default function TaxonomySelector(props: AllSelectorProps) {
               </div>
             )}
 
-            {variant === "crown-jewels" && (
+            {variant === "targets" && (
               <div className="flex flex-wrap gap-2">
                 {filteredItems.map((item) => {
+                  const targetItem = item as TargetItem;
                   const isSelected = selectedIds.includes(item.id);
                   return (
                     <Badge
                       key={item.id}
                       variant={isSelected ? "default" : "secondary"}
-                      className={`transition-opacity ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:opacity-80"}`}
+                      className={`flex items-center gap-2 transition-opacity ${
+                        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:opacity-80"
+                      }`}
                       onClick={() => toggleSelection(item.id)}
+                      title={targetItem.description}
                     >
-                      {item.name}
+                      <span className="truncate max-w-[12rem]">{targetItem.name}</span>
+                      {targetItem.isCrownJewel && (
+                        <span className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-1 text-[0.65rem] uppercase tracking-wide text-[var(--color-text-muted)]">
+                          CJ
+                        </span>
+                      )}
                     </Badge>
                   );
                 })}

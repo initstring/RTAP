@@ -45,18 +45,18 @@ enum UserRole {
 }
 
 model User {
-  id                 String      @id @default(cuid())
-  name               String?
-  email              String      @unique
-  emailVerified      DateTime?
-  image              String?
-  lastLogin          DateTime?
-  role               UserRole    @default(VIEWER)
-  accounts           Account[]
-  sessions           Session[]
-  operations         Operation[]
-  groups             UserGroup[] // User's group memberships
-  authenticators     Authenticator[]
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  emailVerified  DateTime?
+  image          String?
+  lastLogin      DateTime?
+  role           UserRole        @default(VIEWER)
+  accounts       Account[]
+  sessions       Session[]
+  operations     Operation[]
+  groups         UserGroup[] // User's group memberships
+  authenticators Authenticator[]
 }
 
 model VerificationToken {
@@ -141,15 +141,18 @@ model ThreatActor {
   @@index([topThreat])
 }
 
-model CrownJewel {
-  id          String      @id @default(cuid())
-  name        String      @unique // e.g., "Customer Database", "Source Code Repository"
-  description String
-  operations  Operation[] @relation("OperationCrownJewels")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+model Target {
+  id               String            @id @default(cuid())
+  name             String            @unique // e.g., "Customer Database", "Source Code Repository"
+  description      String
+  isCrownJewel     Boolean           @default(false)
+  operations       Operation[]       @relation("OperationTargets")
+  techniqueTargets TechniqueTarget[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([name])
+  @@index([isCrownJewel])
 }
 
 model Tag {
@@ -166,11 +169,11 @@ model Tag {
 
 // Group model for access control
 model Group {
-  id          String @id @default(cuid())
-  name        String @unique // e.g., "Red Team", "Blue Team"
+  id          String      @id @default(cuid())
+  name        String      @unique // e.g., "Red Team", "Blue Team"
   description String
   // Group members
-  members UserGroup[]
+  members     UserGroup[]
 
   // Operations access list (many-to-many via OperationAccessGroup)
   operationAccess OperationAccessGroup[]
@@ -262,12 +265,12 @@ model Operation {
   threatActorId String?
 
   // Many-to-many relationships
-  tags        Tag[]        @relation("OperationTags")
-  crownJewels CrownJewel[] @relation("OperationCrownJewels")
-  techniques  Technique[]
+  tags       Tag[]       @relation("OperationTags")
+  targets    Target[]    @relation("OperationTargets")
+  techniques Technique[]
 
   // Access control
-  visibility   OperationVisibility @default(EVERYONE)
+  visibility   OperationVisibility    @default(EVERYONE)
   accessGroups OperationAccessGroup[]
 
   // Attack flow layout
@@ -309,13 +312,11 @@ model Technique {
   sortOrder   Int    @default(0) // Order within operation for drag-and-drop
 
   // Execution details
-  startTime             DateTime?
-  endTime               DateTime?
-  sourceIp              String?
-  targetSystem          String?
-  crownJewelTargeted    Boolean   @default(false)
-  crownJewelCompromised Boolean   @default(false)
-  executedSuccessfully  Boolean?
+  startTime            DateTime?
+  endTime              DateTime?
+  sourceIp             String?
+  targetSystem         String?
+  executedSuccessfully Boolean?
 
   // Relationships
   operation           Operation          @relation(fields: [operationId], references: [id], onDelete: Cascade)
@@ -326,8 +327,9 @@ model Technique {
   mitreSubTechniqueId String?
 
   // Many-to-many relationships
-  tools    Tool[]    @relation("TechniqueTools")
+  tools    Tool[]            @relation("TechniqueTools")
   outcomes Outcome[]
+  targets  TechniqueTarget[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -335,6 +337,19 @@ model Technique {
   @@index([operationId])
   @@index([mitreTechniqueId])
   @@index([mitreSubTechniqueId])
+}
+
+model TechniqueTarget {
+  techniqueId    String
+  targetId       String
+  wasCompromised Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  technique      Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+  target         Target    @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([techniqueId, targetId])
+  @@index([targetId])
 }
 
 enum OutcomeType {
