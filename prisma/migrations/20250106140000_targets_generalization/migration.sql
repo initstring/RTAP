@@ -69,7 +69,7 @@ CREATE TABLE "TechniqueTarget" (
   "targetId" TEXT NOT NULL,
   "wasCompromised" BOOLEAN NOT NULL DEFAULT false,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "TechniqueTarget_pkey" PRIMARY KEY ("techniqueId", "targetId")
 );
 
@@ -81,6 +81,9 @@ ALTER TABLE "TechniqueTarget"
 ALTER TABLE "TechniqueTarget"
   ADD CONSTRAINT "TechniqueTarget_targetId_fkey"
   FOREIGN KEY ("targetId") REFERENCES "Target" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Restore index on target column for many-to-many lookup parity
+CREATE INDEX IF NOT EXISTS "_OperationTargets_B_index" ON "_OperationTargets" ("B");
 
 -- 4. Migrate legacy technique crown jewel flags into per-target assignments
 INSERT INTO "TechniqueTarget" ("techniqueId", "targetId", "wasCompromised", "createdAt", "updatedAt")
