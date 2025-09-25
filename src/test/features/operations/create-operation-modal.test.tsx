@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import type { OperationStatus, OperationVisibility } from "@prisma/client";
-import CreateOperationModal from "./create-operation-modal";
+import CreateOperationModal from "@/features/operations/components/create-operation-modal";
 import type { RouterOutputs } from "@/trpc/react";
 
 vi.mock("@/trpc/react", () => {
