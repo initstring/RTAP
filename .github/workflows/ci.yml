@@ -11,6 +11,25 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: rtap
+          POSTGRES_PASSWORD: rtap
+          POSTGRES_DB: rtap_ci
+        options: >-
+          --health-cmd "pg_isready -U rtap -d rtap_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      AUTH_SECRET: dummy_auth_secret_abcdefghijklmnopqrstuvwxyz_123456
+      DATABASE_URL: postgresql://rtap:rtap@localhost:5432/rtap_ci
+      TEST_DATABASE_URL: postgresql://rtap:rtap@localhost:5432/rtap_ci_test
+      NEXT_TELEMETRY_DISABLED: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,21 +43,23 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Wait for database
+        run: npx prisma db wait --schema prisma/schema.prisma --timeout 30
+
+      - name: Apply migrations
+        run: npm run db:deploy
+
+      - name: Check for schema drift
+        run: npx prisma migrate diff --from-migrations --to-schema-datamodel prisma/schema.prisma --exit-code
+
       - name: Lint + Typecheck
         env:
-          # Minimal env so prisma/next tooling and env schema are happy
-          AUTH_SECRET: dummy_auth_secret_abcdefghijklmnopqrstuvwxyz_123456
-          DATABASE_URL: file:./dev.db
           NODE_ENV: test
-          NEXT_TELEMETRY_DISABLED: 1
         run: npm run check
 
       - name: Tests with coverage
         env:
-          AUTH_SECRET: dummy_auth_secret_abcdefghijklmnopqrstuvwxyz_123456
-          DATABASE_URL: file:./dev.db
           NODE_ENV: test
-          NEXT_TELEMETRY_DISABLED: 1
         run: npm run test:coverage
 
       - name: Upload coverage report
@@ -50,8 +71,5 @@ jobs:
 
       - name: Build
         env:
-          AUTH_SECRET: dummy_auth_secret_abcdefghijklmnopqrstuvwxyz_123456
-          DATABASE_URL: file:./dev.db
           NODE_ENV: production
-          NEXT_TELEMETRY_DISABLED: 1
         run: npm run build

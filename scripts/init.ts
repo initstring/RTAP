@@ -5,7 +5,6 @@
  * - Logs at info level regardless of LOG_LEVEL to aid operations
  */
 import 'dotenv/config';
-import { existsSync, readdirSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 
@@ -18,18 +17,11 @@ async function main() {
     process.exit(1);
   }
 
-  // Apply pending migrations or push schema on first run using Prisma CLI
+  // Always apply pending migrations via Prisma CLI
   try {
     const prismaBin = path.resolve('node_modules/.bin/prisma');
-    const migrationsDir = path.resolve('prisma/migrations');
-    const hasMigrations = existsSync(migrationsDir) && readdirSync(migrationsDir).length > 0;
-
-    const args = hasMigrations ? ['migrate', 'deploy', '--schema', 'prisma/schema.prisma'] : ['db', 'push', '--schema', 'prisma/schema.prisma'];
-    console.info(
-      hasMigrations
-        ? '[init] Applying database migrations via `prisma migrate deploy` ...'
-        : '[init] No migrations found; syncing schema via `prisma db push` ...',
-    );
+    const args = ['migrate', 'deploy', '--schema', 'prisma/schema.prisma'];
+    console.info('[init] Applying database migrations via `prisma migrate deploy` ...');
 
     await new Promise<void>((resolve, reject) => {
       const child = spawn(prismaBin, args, {
@@ -44,7 +36,7 @@ async function main() {
     });
   } catch (e) {
     console.error(
-      '[init] Migration/schema sync failed. Ensure DATABASE_URL is correct and migrations are valid. Try `npm run db:migrate` or `npm run db:push` for details.',
+      '[init] Migration/schema sync failed. Ensure DATABASE_URL is correct and migrations are valid. Try `npm run db:migrate` for details.',
       e,
     );
     process.exit(1);

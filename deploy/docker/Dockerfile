@@ -9,7 +9,7 @@ WORKDIR /app
 ENV SKIP_ENV_VALIDATION=1 \
     # Provide a build-time default so `prisma generate` doesn't error.
     # Runtime will override via compose/env.
-    DATABASE_URL=file:./dev.db
+    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rtap
 
 # Install OpenSSL so Prisma can detect libssl for TLS DBs (future Postgres)
 RUN apt-get update -y \
@@ -20,15 +20,11 @@ RUN apt-get update -y \
 # Copy package manifests and Prisma schema so postinstall (prisma generate) works
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-# Switch Prisma provider to Postgres inside the container to match runtime DB
-RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
 # Install deps including devDependencies so Prisma CLI is available (prisma generate runs now)
 RUN npm ci --include=dev
 
 # Copy source and build
 COPY . .
-# Ensure provider stays Postgres after copying full source
-RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
 # Build the Next.js app in production mode
 ENV NODE_ENV=production
 RUN npm run build

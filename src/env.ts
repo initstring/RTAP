@@ -8,20 +8,11 @@ export const env = createEnv({
    */
   server: {
     AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
-    // Allow common DB URLs including SQLite file URLs
     DATABASE_URL: z
       .string()
       .refine(
-        (v) =>
-          (v.startsWith("file:") && v.length > "file:".length) ||
-          v.startsWith("postgres://") ||
-          v.startsWith("postgresql://") ||
-          v.startsWith("mysql://") ||
-          v.startsWith("sqlserver://") ||
-          v.startsWith("mongodb://") ||
-          v.startsWith("mongodb+srv://") ||
-          v.startsWith("cockroachdb://"),
-        { message: "DATABASE_URL must be a valid connection string (file:, postgres, mysql, sqlserver, mongodb, cockroachdb)" },
+        (v) => v.startsWith("postgres://") || v.startsWith("postgresql://"),
+        { message: "DATABASE_URL must be a valid PostgreSQL connection string" },
       ),
     NODE_ENV: z
       .enum(["development", "test", "production"])

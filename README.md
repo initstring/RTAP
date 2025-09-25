@@ -19,12 +19,15 @@ User Docs:
 - [Getting Started Workflow](docs/getting-started.md)
 
 Development Docs:
+- [Development](docs/development.md)
 - [UI Style Guide](docs/dev/STYLE.md)
 - [Design Overview](docs/dev/DESIGN.md)
 
 ## Contributing
 
-This is still an early experiment, and I'm not ready for big contributions. If you have an idea, please open an issue first. I'd like to play around with it a bit more before deciding if it's useful and what shape it should take.
+This is still an early experiment, and I'm not ready for big contributions. I'd like to play around with it a bit more before deciding if it's useful and what shape it should take.
+
+If you have an idea, or just want me to add something small, please open an issue first. 
 
 See [AGENTS.md](AGENTS.md) for engineering standards.
 
@@ -36,7 +39,7 @@ If you see something scary, please open an issue to let me know.
 
 Initially based on the T3 Stack - Next.js, tRPC, Prisma, TypeScript. Type-safe APIs, server-side rendering, and component-driven design.
 
-Local development uses sqlite and the node server. "Production" installation uses docker-compose, postgres, and BYO-reverse-proxy.
+Local development runs the Next.js dev server against a local PostgreSQL container. Production workloads also use Docker (web + Postgres) behind your own reverse proxy.
 
 Authentication is all passwordless using NextAuth - with an option for passkeys and/or OAuth providers (initial support includes Google SSO).
 

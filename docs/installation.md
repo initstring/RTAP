@@ -1,32 +1,8 @@
 # Installation
 
-Follow these instructions to set up the Red Team Assessment Platform (RTAP) in local development or production environments.
+Follow these instructions to set up Red Team Assessment Platform (RTAP) in local development or production environments.
 
-## Local Development (Non-Docker)
-
-Local development uses SQLite and the Node.js dev server.
-
-```sh
-# Copy example env file and replace secrets
-cp .env.example .env
-
-# Install dependencies
-npm install
-
-# Initialize schema and seed first-run admin + MITRE
-npm run init
-
-# If not using SSO, generate 1-time login URL to set up your first passkey
-npm run generate-admin-login
-
-# Optionally - seed demo taxonomy/operation data FOR DEMO PURPOSES ONLY)
-npx tsx scripts/demo-data.ts
-
-# Start development server (or use one-liner: `npm run dev:with-init`)
-npm run dev --turbo
-```
-
-## Production (Docker)
+## Docker Installation
 
 The provided `deploy/docker/docker-compose.yml` file does not include a reverse proxy; configure your own with TLS.
 
@@ -39,14 +15,11 @@ cp .env.example .env
 docker compose up -d
 
 # Optionally - seed demo taxonomy/operation data (FOR DEMO PURPOSES ONLY)
-docker exec rtap-web npx tsx scripts/demo-data.ts
+docker exec rtap-web npm run seed:demo
 
 # If not using SSO, generate 1-time login URL to set up your first passkey
 docker exec rtap-web npm run generate-admin-login
 ```
-
-Populate the `.env` file with the `RTAP_*` variables referenced in `docker-compose.yml` (port, database credentials, auth URL,
-and optional provider secrets) before starting the stack.
 
 ## Authentication
 
@@ -54,7 +27,7 @@ and optional provider secrets) before starting the stack.
 
 Let's be the change we want to see in the world. There is no support for passwords! Currently supported options are:
 
-- Passkeys
+- Passkeys (required TLS or localhost)
 - Google OAuth (SSO)
 
 The platform uses NextAuth, so adding additional SSO providers would be pretty easy.

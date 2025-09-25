@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rtap
+      POSTGRES_PASSWORD: rtap
+      POSTGRES_DB: rtap
+    ports:
+      - "5432:5432"
+    volumes:
+      - dev-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rtap -d rtap"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  dev-postgres-data:

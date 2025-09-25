@@ -23,10 +23,13 @@ vi.mock("next-auth/providers/credentials", () => ({
 
 // Prisma is mocked in individual test files
 
+const testDatabaseUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL ?? "postgresql://rtap:rtap@localhost:5432/rtap";
+process.env.DATABASE_URL = testDatabaseUrl;
+
 // Mock environment variables
 vi.mock("@/env", () => ({
   env: {
-    DATABASE_URL: "file:./test.db",
+    DATABASE_URL: testDatabaseUrl,
     AUTH_SECRET: "test-secret",
   },
 }));

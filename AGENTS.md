@@ -7,10 +7,15 @@ Concise, enforceable standards for this app. Enough context to work effectively 
 - Core objects: Operations → Techniques → Outcomes, plus Taxonomy (tags, tools, log sources, crown jewels, threat actors) and MITRE data.
 - Users and roles: ADMIN, OPERATOR, VIEWER. Groups are optional to restrict access per operation.
 - Tech stack: Next.js 15 (App Router) + TypeScript, tRPC v11 + Zod, Prisma, NextAuth v5, Tailwind.
-- Local development uses sqlite, production environments use Docker with Postgres (user provides their own reverse proxy)
+- Local development runs the Next.js dev server against a local PostgreSQL container; production environments use Docker with Postgres (user provides their own reverse proxy)
 
 ## Quick Commands
+- `npm run db:up` — Start local Postgres (`deploy/docker/docker-compose.dev.yml`)
+- `npm run init` — Apply migrations + seed baseline data
 - `npm run dev --turbo` — Start dev server
+- `npm run db:migrate -- --name <change>` — Create a new migration during development
+- `npm run db:deploy` — Apply committed migrations to the current database
+- `npm run seed:demo` — Populate optional demo taxonomy/operation data
 - `npm run check` — Lint + type-check (must be clean)
 - `npm run test` — Run tests
 - `npm run build` — Production build
@@ -150,6 +155,13 @@ Use `eslint-plugin-boundaries` and `no-restricted-imports` to discourage cross�
 - Before coding: run `npm run check` and scan existing patterns.
 - After coding: ensure `npm run check` and `npm run test` are clean.
 - New endpoints: confirm they fit the router’s concern and reuse shared helpers.
+
+## Database Workflow
+- Treat `prisma/schema.prisma` as the source of truth for all schema edits; never hand-edit existing SQL migrations.
+- Create migrations with `npm run db:migrate -- --name <change>` immediately after updating the schema; commit both the schema update and the new `prisma/migrations/` folder.
+- Apply committed migrations locally with `npm run db:deploy` (or `npm run init` on first run) and push the same migrations with your PR—no drift fixes after merge.
+- Use `npx prisma migrate diff --from-migrations --to-schema-datamodel prisma/schema.prisma --exit-code` if you suspect divergence; CI runs the same guard.
+- Tests target `TEST_DATABASE_URL` (default `postgresql://rtap:rtap@localhost:5432/rtap_test`) and `global-setup` creates the DB on demand before running `prisma migrate reset`, keeping your main dev database untouched.
 
 ## AI Contributor Rules (Structural PRs)
 - Use `git mv` before edits to preserve history.
