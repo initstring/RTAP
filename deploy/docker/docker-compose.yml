@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
 
   rtap-web:
-    image: ghcr.io/initstring/rtap:v0.4.0
+    image: ghcr.io/initstring/rtap:v0.4.1
     container_name: rtap-web
     depends_on:
       - rtap-postgres
