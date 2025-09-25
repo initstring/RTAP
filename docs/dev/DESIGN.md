@@ -17,8 +17,8 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 ## Architecture
 
 - Next.js 15 (App Router) + TypeScript
-- tRPC v11 (Zod validation); Prisma + SQLite
-- NextAuth (credentials)
+- tRPC v11 (Zod validation); Prisma targeting PostgreSQL (local dev uses a Docker container, production uses managed Postgres)
+- NextAuth (passkey-first, with optional OAuth)
 - Access helpers enforce scoping and rights: `getAccessibleOperationFilter`, `checkOperationAccess`.
 
 ### Conventions (where things live)
@@ -100,6 +100,6 @@ Unified pattern across tabs: SettingsHeader + EntityListCard + EntityModal; Inli
 
 ## First Boot & DB Init
 
-- Initialization runs before the server starts via `scripts/init.ts`. It ensures an admin account exists and seeds MITRE data if empty by parsing the STIX bundle at `data/mitre/enterprise-attack.json` through `src/lib/mitreStix.ts` (no generated processed file).
-- Development (SQLite): after deleting the DB, run `npm run db:push` once to create tables. Then start the app; initialization will seed admin + MITRE. Data persists across restarts.
-- Production: the app never runs `db push`. Provision schema using migrations (`npm run db:migrate`) or ship a pre-created SQLite file and persist it. Initialization still creates the admin and seeds MITRE if tables are present and empty.
+- Startup runs `scripts/init.ts` before Next.js launches. It executes `prisma migrate deploy` against `DATABASE_URL`, then ensures the initial admin user and MITRE dataset exist (parsed from `data/mitre/enterprise-attack.json` via `src/lib/mitreStix.ts`).
+- Local development: run `npm run db:up` to start the Dockerized Postgres instance, then `npm run init` to apply migrations + seed baseline data. Test runs target `TEST_DATABASE_URL` (defaults to a dedicated `rtap_test` database) and reset it automatically.
+- Production: bundle migrations, run `npm run db:deploy` (or the same `scripts/init.ts`) during release/startup, and persist the Postgres volume. No `prisma db push` usage in any environment.
