@@ -10,8 +10,7 @@ const resolveTestDatabaseUrl = () => {
     return explicit;
   }
 
-  const base = process.env.DATABASE_URL?.trim() ?? DEFAULT_DATABASE_URL;
-  return base;
+  return DEFAULT_DATABASE_URL;
 };
 
 async function runPrismaReset(databaseUrl: string) {
