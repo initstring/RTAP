@@ -38,7 +38,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.16.2",
     "@radix-ui/react-select": "^2.2.6",
-    "@simplewebauthn/browser": "^9.0.1",
+    "@simplewebauthn/browser": "^13.2.0",
     "@simplewebauthn/server": "^9.0.3",
     "@t3-oss/env-nextjs": "^0.13.0",
     "@tanstack/react-query": "^5.90.2",
