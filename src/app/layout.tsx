@@ -7,6 +7,7 @@ import { SessionProvider } from "next-auth/react";
 import { TRPCReactProvider } from "@/trpc/react";
 import { AppLayout } from "@features/shared/layout/app-layout";
 import { SidebarProvider } from "@features/shared/layout/sidebar-context";
+import { ThemeProvider } from "@features/shared/theme";
 
 export const metadata: Metadata = {
   title: "Red Team Assessment Platform (RTAP)",
@@ -23,17 +24,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geist.variable} theme-modern-teal`}>
+    <html lang="en" suppressHydrationWarning className={geist.variable}>
       <body>
-        <TRPCReactProvider>
-          <SessionProvider>
-            <SidebarProvider>
-              <AppLayout>
-                <main className="min-h-screen">{children}</main>
-              </AppLayout>
-            </SidebarProvider>
-          </SessionProvider>
-        </TRPCReactProvider>
+        <ThemeProvider defaultTheme="theme-modern-teal">
+          <TRPCReactProvider>
+            <SessionProvider>
+              <SidebarProvider>
+                <AppLayout>
+                  <main className="min-h-screen">{children}</main>
+                </AppLayout>
+              </SidebarProvider>
+            </SessionProvider>
+          </TRPCReactProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
