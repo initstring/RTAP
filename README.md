@@ -1,8 +1,8 @@
 # Red Team Assessment Platform (RTAP)
 
-_This is an experiment in creating something useful with AI coding agents. The initial version was made with Claude Code, but it has since been largely re-written by GPT-5 Codex. It is a personal hobby project, with no commitments and no promises._
+_This is a personal hobby project, with no commitments and no promises. It is built mostly with OpenAI's GPT5-Codex, as an experiment in creating a full application with AI agents._
 
-The Red Team Assessment Platform (RTAP) is built for internal Red Teams to plan and analyze their operations. The features and functionality are designed with their specific needs in mind, such as:
+Red Team Assessment Platform (RTAP) is built for internal Red Teams to plan and analyze their operations. The features and functionality are designed with their specific needs in mind, such as:
 
 - Integrating the concept of threat actors and crown jewels into operations - who is being emulated, what is being targeted, and how is that trending over time?
 - Producing visually appealing artifacts from individual operations, such as attack heatmaps, interactive flow charts, and timelines that allow the operator to design meaningful attack narratives.
@@ -27,13 +27,13 @@ Development Docs:
 
 This is still an early experiment, and I'm not ready for big contributions. I'd like to play around with it a bit more before deciding if it's useful and what shape it should take.
 
-If you have an idea, or just want me to add something small, please open an issue first. 
+If you have an idea, or just want me to add something small, please open an issue first.
 
 See [AGENTS.md](AGENTS.md) for engineering standards.
 
 ## Security
 
-If you see something scary, please open an issue to let me know.
+See [SECURITY.md](SECURITY.md) for information on reporting vulnerabilities.
 
 ## Tech Stack
 
