@@ -1,6 +1,8 @@
 "use client";
 
 import { toPng } from "html-to-image";
+import type { ThemeKey } from "@features/shared/theme";
+import { isLightTheme, getDefaultTheme } from "@features/shared/theme";
 
 import { shouldExportNode } from "./shouldExportNode";
 
@@ -10,6 +12,12 @@ type StyleOverride = {
   value: string;
   priority: string;
 };
+
+interface ExportOptions {
+  forceTheme?: ThemeKey;
+  optimizeForPrint?: boolean;
+  backgroundColor?: string;
+}
 
 function restoreStyleOverrides(overrides: StyleOverride[]) {
   for (let i = overrides.length - 1; i >= 0; i -= 1) {
@@ -91,15 +99,76 @@ function applyExportDirectivesInPlace(root: HTMLElement) {
   };
 }
 
-export async function captureElementToPng(element: HTMLElement): Promise<string> {
+function applyExportThemeOverride(root: HTMLElement, targetTheme?: ThemeKey, optimizeForPrint = false) {
+  const overrides: StyleOverride[] = [];
+  const htmlElement = document.documentElement;
+  
+  if (targetTheme || optimizeForPrint) {
+    // Determine the theme to use for export
+    const exportTheme = optimizeForPrint ? getDefaultTheme("light") : targetTheme;
+    
+    if (exportTheme) {
+      // Store current theme classes
+      const currentClasses = Array.from(htmlElement.classList);
+      const themeClasses = currentClasses.filter(cls => 
+        cls.startsWith("theme-modern-") || cls.startsWith("theme-light-")
+      );
+      
+      // Apply export theme
+      themeClasses.forEach(cls => htmlElement.classList.remove(cls));
+      htmlElement.classList.add(exportTheme);
+      
+      // If using light theme for export, ensure proper contrast and visibility
+      if (isLightTheme(exportTheme) || optimizeForPrint) {
+        applyStyleOverride(root, "background-color", "#ffffff", "important", overrides);
+        applyStyleOverride(root, "color", "#0f172a", "important", overrides);
+        
+        // Remove any glow effects that don't work well in light mode
+        const glowElements = root.querySelectorAll<HTMLElement>(".glow-accent, .glow-subtle, .glow-error");
+        glowElements.forEach(el => {
+          applyStyleOverride(el, "box-shadow", "none", "important", overrides);
+        });
+      }
+      
+      return () => {
+        // Restore original theme classes
+        htmlElement.classList.remove(exportTheme);
+        themeClasses.forEach(cls => htmlElement.classList.add(cls));
+        restoreStyleOverrides(overrides);
+      };
+    }
+  }
+  
+  return () => {
+    restoreStyleOverrides(overrides);
+  };
+}
+
+export async function captureElementToPng(
+  element: HTMLElement, 
+  options: ExportOptions = {}
+): Promise<string> {
+  const { forceTheme, optimizeForPrint = false, backgroundColor } = options;
+  
   const rootOverrides: StyleOverride[] = [];
   const restore = applyExportDirectivesInPlace(element);
+  const restoreTheme = applyExportThemeOverride(element, forceTheme, optimizeForPrint);
 
   try {
     const width = element.scrollWidth || element.clientWidth;
     const height = element.scrollHeight || element.clientHeight;
     const computed = getComputedStyle(element);
-    const { background, backgroundColor } = computed;
+    
+    // Determine background color
+    let finalBackgroundColor = backgroundColor;
+    if (!finalBackgroundColor) {
+      if (optimizeForPrint || (forceTheme && isLightTheme(forceTheme))) {
+        finalBackgroundColor = "#ffffff";
+      } else {
+        const { background, backgroundColor: computedBg } = computed;
+        finalBackgroundColor = computedBg === "rgba(0, 0, 0, 0)" ? undefined : computedBg;
+      }
+    }
 
     applyStyleOverride(element, "width", `${width}px`, "important", rootOverrides);
     applyStyleOverride(element, "height", `${height}px`, "important", rootOverrides);
@@ -109,12 +178,13 @@ export async function captureElementToPng(element: HTMLElement): Promise<string>
       skipFonts: true,
       width,
       height,
-      backgroundColor: backgroundColor === "rgba(0, 0, 0, 0)" ? undefined : backgroundColor,
-      style: background ? { background } : undefined,
+      backgroundColor: finalBackgroundColor,
+      style: finalBackgroundColor ? { background: finalBackgroundColor } : undefined,
       filter: shouldExportNode,
     });
   } finally {
     restoreStyleOverrides(rootOverrides);
+    restoreTheme();
     restore();
   }
 }

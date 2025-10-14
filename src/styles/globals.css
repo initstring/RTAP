@@ -135,6 +135,96 @@
   --ring: var(--color-accent);
 }
 
+/* Light theme - Neutral */
+:root.theme-light-neutral {
+  /* Accent - maintain brand consistency with teal */
+  --color-accent-rgb: 59, 201, 186;
+  --color-accent: rgb(var(--color-accent-rgb));
+  --color-accent-muted: rgba(var(--color-accent-rgb), 0.8);
+  --color-accent-dim: rgba(var(--color-accent-rgb), 0.85);
+
+  /* Surfaces - inverted hierarchy for light mode */
+  --surface-0: #ffffff;
+  --surface-1: #f8fafc;
+  --surface-2: #f1f5f9;
+  --glass-alpha: 0.02;
+
+  --color-surface: var(--surface-0);
+  --color-surface-elevated: var(--surface-1);
+  --color-border: #e2e8f0;
+  --color-border-light: #cbd5e1;
+
+  /* Text - inverted hierarchy for light backgrounds */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --ring: var(--color-accent);
+}
+
+/* Light theme - Blue */
+:root.theme-light-blue {
+  /* Accent - light mode blue */
+  --color-accent-rgb: 37, 99, 235; /* blue-600 for better contrast on light */
+  --color-accent: rgb(var(--color-accent-rgb));
+  --color-accent-muted: rgba(var(--color-accent-rgb), 0.8);
+  --color-accent-dim: rgba(var(--color-accent-rgb), 0.85);
+
+  /* Surfaces */
+  --surface-0: #ffffff;
+  --surface-1: #f1f5f9;
+  --surface-2: #e2e8f0;
+  --glass-alpha: 0.02;
+
+  --color-surface: var(--surface-0);
+  --color-surface-elevated: var(--surface-1);
+  --color-border: #cbd5e1;
+  --color-border-light: #94a3b8;
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --ring: var(--color-accent);
+}
+
+/* Light theme - Warm */
+:root.theme-light-warm {
+  /* Accent - warm orange for light mode */
+  --color-accent-rgb: 234, 88, 12; /* orange-600 */
+  --color-accent: rgb(var(--color-accent-rgb));
+  --color-accent-muted: rgba(var(--color-accent-rgb), 0.8);
+  --color-accent-dim: rgba(var(--color-accent-rgb), 0.85);
+
+  /* Surfaces - warm neutral palette */
+  --surface-0: #fefefe;
+  --surface-1: #fafaf9;
+  --surface-2: #f5f5f4;
+  --glass-alpha: 0.02;
+
+  --color-surface: var(--surface-0);
+  --color-surface-elevated: var(--surface-1);
+  --color-border: #e7e5e4;
+  --color-border-light: #d6d3d1;
+
+  /* Text */
+  --text-primary: #1c1917;
+  --text-secondary: #44403c;
+  --text-muted: #78716c;
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --ring: var(--color-accent);
+}
+
 /* Base styles */
 * {
   border-color: var(--color-border);
@@ -205,6 +295,20 @@ body { background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1)
   --status-info-bg: rgba(var(--color-accent-rgb, 90,177,255), 0.16);
 }
 
+/* Light theme status tokens */
+:root.theme-light-neutral,
+:root.theme-light-blue,
+:root.theme-light-warm {
+  --status-success-fg: #059669; /* green-600 for better contrast */
+  --status-success-bg: rgba(5,150,105,0.1);
+  --status-warn-fg: #d97706; /* amber-600 */
+  --status-warn-bg: rgba(217,119,6,0.1);
+  --status-error-fg: #dc2626; /* red-600 */
+  --status-error-bg: rgba(220,38,38,0.1);
+  --status-info-fg: var(--color-accent);
+  --status-info-bg: rgba(var(--color-accent-rgb), 0.1);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -221,4 +325,33 @@ body { background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1)
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent);
+}
+
+/* Print optimization - force light mode for printing */
+@media print {
+  :root {
+    --surface-0: #ffffff !important;
+    --surface-1: #f8fafc !important;
+    --surface-2: #f1f5f9 !important;
+    --color-surface: #ffffff !important;
+    --color-surface-elevated: #f8fafc !important;
+    --color-border: #e2e8f0 !important;
+    --color-border-light: #cbd5e1 !important;
+    --text-primary: #0f172a !important;
+    --text-secondary: #475569 !important;
+    --text-muted: #64748b !important;
+    --color-text-primary: #0f172a !important;
+    --color-text-secondary: #475569 !important;
+    --color-text-muted: #64748b !important;
+  }
+  
+  body {
+    background: white !important;
+  }
+  
+  .glow-accent,
+  .glow-subtle,
+  .glow-error {
+    box-shadow: none !important;
+  }
 }
