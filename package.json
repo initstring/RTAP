@@ -36,7 +36,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "^7.1.0",
     "@radix-ui/react-select": "^2.2.6",
     "@simplewebauthn/browser": "^9.0.1",
     "@simplewebauthn/server": "^9.0.3",
