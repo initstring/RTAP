@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { UserRole } from "@prisma/client";
 // Theme toggle now lives inside the UserMenu dropdown
 import { useSidebar } from "@features/shared/layout/sidebar-context";
+import { Shield } from "lucide-react";
 import { UserMenu } from "./user-menu";
 
 interface NavItem {
@@ -81,7 +82,7 @@ const navigation: NavItem[] = [
         label: "Data",
         href: "/settings/data",
       },
-      
+
     ],
   },
 ];
@@ -106,7 +107,7 @@ export function SidebarNav() {
   const isParentActive = (item: NavItem): boolean => {
     if (pathname === item.href) return true;
     if (item.children) {
-      return item.children.some(child => 
+      return item.children.some(child =>
         isParentActive(child) || pathname === child.href
       );
     }
@@ -132,11 +133,11 @@ export function SidebarNav() {
           className={`
             flex items-center justify-between px-3 py-2 text-sm rounded-[var(--radius-md)] transition-all duration-200 cursor-pointer
             ${depth > 0 ? 'ml-' + (depth * 4) : ''}
-            ${active 
-              ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-l-2 border-[var(--color-accent)] -ml-[2px]' 
+            ${active
+              ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-l-2 border-[var(--color-accent)] -ml-[2px]'
               : parentActive
-              ? 'text-[var(--color-text-primary)]'
-              : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
+                ? 'text-[var(--color-text-primary)]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
             }
           `}
           onClick={() => {
@@ -146,7 +147,7 @@ export function SidebarNav() {
           }}
         >
           {item.href ? (
-            <Link 
+            <Link
               href={item.href}
               className="flex items-center gap-3 flex-1"
               onClick={(e) => hasChildren && e.stopPropagation()}
@@ -191,7 +192,7 @@ export function SidebarNav() {
   if (!session) return null;
 
   return (
-    <div 
+    <div
       className={`
         ${isCollapsed ? 'w-16' : 'w-64'} 
         h-screen bg-[var(--color-surface)] border-r border-[var(--color-border)] 
@@ -202,7 +203,7 @@ export function SidebarNav() {
       <div className="p-4 border-b border-[var(--color-border)]">
         <div className="flex items-center justify-between">
           <Link href="/" className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="w-6 h-6 bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-accent-muted)] rounded-[var(--radius-sm)] flex-shrink-0" />
+            <Shield className="w-8 h-8 text-[var(--color-accent)] fill-[var(--color-accent)]/10" />
             {!isCollapsed && (
               <span className="text-xl font-bold text-[var(--color-text-primary)]">RTAP</span>
             )}
