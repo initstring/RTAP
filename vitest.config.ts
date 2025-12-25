@@ -11,11 +11,7 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     globals: true,
     pool: "threads",
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
+    fileParallelism: false,
     include: ["src/**/*.test.{ts,tsx}"],
     exclude: ["node_modules", ".next"],
     coverage: {

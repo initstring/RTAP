@@ -2,13 +2,17 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Eye, Shield, UserCheck, X } from "lucide-react";
-import { Handle, Position } from "reactflow";
+import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import type { RouterOutputs } from "@/trpc/react";
 
 type Operation = RouterOutputs["operations"]["getById"];
 type Technique = Operation["techniques"][0] & { executedSuccessfully: boolean | null };
 
-export default function TechniqueNode({ data }: { data: { technique: Technique } }) {
+type TechniqueNodeData = {
+  technique: Technique;
+} & Record<string, unknown>;
+
+export default function TechniqueNode({ data }: NodeProps<Node<TechniqueNodeData>>) {
   const { technique } = data;
   const isCompleted = technique.endTime !== null;
   const isInProgress = technique.startTime !== null && technique.endTime === null;
