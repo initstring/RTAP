@@ -56,83 +56,36 @@
   --shadow-glow-error: 0 0 8px rgba(255, 68, 68, 0.2);
 }
 
-/* Modern theme tokens (opt-in) - Teal */
-:root.theme-modern-teal {
-  /* Accent */
-  --color-accent-rgb: 59, 201, 186;
+/* Light Theme */
+:root[data-theme='light'] {
+  /* Accent - Darker green for contrast against white */
+  --color-accent-rgb: 0, 150, 40;
   --color-accent: rgb(var(--color-accent-rgb));
+  --color-accent-muted: rgba(var(--color-accent-rgb), 0.8);
+  --color-accent-dim: rgba(var(--color-accent-rgb), 0.1);
+  --ring: var(--color-accent);
 
   /* Surfaces */
-  --surface-0: #0b0f14;
-  --surface-1: #121821;
-  --surface-2: #18212c;
-  --glass-alpha: 0.06;
+  --surface-0: #ffffff;
+  --surface-1: #f4f6f8;
+  --surface-2: #e2e8f0;
+  --glass-alpha: 0.8;
 
-  /* Map legacy tokens to modern surfaces for easy adoption */
   --color-surface: var(--surface-0);
   --color-surface-elevated: var(--surface-1);
-  --color-border: rgba(var(--border-rgb, 255,255,255), 0.10);
-  --color-border-light: rgba(var(--border-rgb, 255,255,255), 0.18);
+  --color-border: #e2e8f0;
+  --color-border-light: #cbd5e1;
 
   /* Text */
-  --text-primary: #e6e9ee;
-  --text-secondary: #b4bdca;
-  --text-muted: #8893a1;
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
 
-  --ring: var(--color-accent);
-}
-
-/* Modern theme - Electric Blue */
-:root.theme-modern-blue {
-  --color-accent-rgb: 90, 177, 255; /* #5AB1FF */
-  --color-accent: rgb(var(--color-accent-rgb));
-
-  --surface-0: #0b0f14;
-  --surface-1: #121821;
-  --surface-2: #17202b;
-  --glass-alpha: 0.06;
-
-  --color-surface: var(--surface-0);
-  --color-surface-elevated: var(--surface-1);
-  --color-border: rgba(var(--border-rgb, 255,255,255), 0.10);
-  --color-border-light: rgba(var(--border-rgb, 255,255,255), 0.18);
-
-  --text-primary: #e6eaf0;
-  --text-secondary: #b8c4d4;
-  --text-muted: #90a0b5;
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-
-  --ring: var(--color-accent);
-}
-
-/* Modern theme - Ember */
-:root.theme-modern-ember {
-  --color-accent-rgb: 255, 107, 90; /* #FF6B5A */
-  --color-accent: rgb(var(--color-accent-rgb));
-
-  --surface-0: #0e0f13;
-  --surface-1: #14161b;
-  --surface-2: #191c22;
-  --glass-alpha: 0.06;
-
-  --color-surface: var(--surface-0);
-  --color-surface-elevated: var(--surface-1);
-  --color-border: rgba(var(--border-rgb, 255,255,255), 0.10);
-  --color-border-light: rgba(var(--border-rgb, 255,255,255), 0.18);
-
-  --text-primary: #e9ecf1;
-  --text-secondary: #c9ced6;
-  --text-muted: #9aa3af;
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-
-  --ring: var(--color-accent);
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 10px rgba(var(--color-accent-rgb), 0.2);
 }
 
 /* Base styles */
@@ -140,8 +93,15 @@
   border-color: var(--color-border);
 }
 
-html { background-color: var(--color-surface); color: var(--color-text-primary); }
-body { background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1) 100%); min-height: 100vh; }
+html {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+body {
+  background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1) 100%);
+  min-height: 100vh;
+}
 
 /* Subtle glow effects */
 .glow-accent {
@@ -180,29 +140,27 @@ body { background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-1)
   opacity: 0.3;
 }
 
-/* Glass utilities for the modern theme */
+/* Glass utilities */
 .glass {
-  background-color: rgba(255,255,255, var(--glass-alpha, 0.04));
+  background-color: rgba(255, 255, 255, var(--glass-alpha, 0.04));
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(var(--border-rgb, 255,255,255), 0.12);
+  border: 1px solid rgba(var(--border-rgb, 255, 255, 255), 0.12);
 }
 
-
-/* Status tokens (modern themes) */
-:root,
-:root.theme-modern,
-:root.theme-modern-teal,
-:root.theme-modern-blue,
-:root.theme-modern-ember {
-  --status-success-fg: #4ade80; /* green-400 */
-  --status-success-bg: rgba(74,222,128,0.16);
-  --status-warn-fg: #fbbf24; /* amber-400 */
-  --status-warn-bg: rgba(251,191,36,0.16);
-  --status-error-fg: #f87171; /* red-400 */
-  --status-error-bg: rgba(248,113,113,0.16);
+/* Status tokens */
+:root {
+  --status-success-fg: #4ade80;
+  /* green-400 */
+  --status-success-bg: rgba(74, 222, 128, 0.16);
+  --status-warn-fg: #fbbf24;
+  /* amber-400 */
+  --status-warn-bg: rgba(251, 191, 36, 0.16);
+  --status-error-fg: #f87171;
+  /* red-400 */
+  --status-error-bg: rgba(248, 113, 113, 0.16);
   --status-info-fg: var(--color-accent, #5ab1ff);
-  --status-info-bg: rgba(var(--color-accent-rgb, 90,177,255), 0.16);
+  --status-info-bg: rgba(var(--color-accent-rgb, 90, 177, 255), 0.16);
 }
 
 /* Scrollbar styling */
