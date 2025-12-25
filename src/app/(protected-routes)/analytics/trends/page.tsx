@@ -91,7 +91,7 @@ export default function TrendsPage() {
                 dataKey="preventionRate"
                 name="Prevention Rate"
                 title="Prevention Rate Trends"
-                color="var(--color-warning)"
+                color="var(--color-accent)"
                 icon={Shield}
               />
               <RateTrendChart
