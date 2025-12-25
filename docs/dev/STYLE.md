@@ -8,11 +8,12 @@ Structure and Naming (source of truth)
 - Path aliases: `@features/*`, `@server/*`, `@lib/*`, `@components/*`, and `@/*` are configured in `tsconfig.json` — prefer these over deep relative imports.
 - Naming: keep existing file names for now; future cleanup will normalize React component filenames to kebab-case and utilities to camelCase. Avoid renaming during structural moves.
 
-A concise, enforceable guide to keep the UI polished, consistent, and performant. Themes are neutral, dense, and modern — not neon or blurry.
+A concise, enforceable guide to keep the UI polished, consistent, and performant. Themes are neutral, dense, and modern — using a Professional Blue accent for clarity.
 
 Principles
 
-- Purposeful contrast: dark, cool neutrals with a restrained accent.
+- Purposeful contrast: deep neutral blacks (Zinc) or clean whites (Slate); restrained Blue accent.
+- Binary System: Strict Light vs. Dark modes. No confusing sub-themes.
 - No blur by default: crisp 1px borders; use blur only on overlays if needed.
 - Compact density: smaller paddings, tight grids, minimal chrome.
 - Consistent states: same focus, hover, and success/failure treatments everywhere.
@@ -20,7 +21,7 @@ Principles
 
 Canonical Surfaces & Cards
 
-- Page surface: `--surface-0` (neutral background).
+- Page surface: `--surface-0` (Zinc-950 or White).
 - List/content cards: `Card variant="default"` with 1px border. Hover = subtle border/ring, not darker fill.
 - Overlays/modals: `Card variant="elevated"` only, stronger surface and shadow.
 - Content inside modals: use neutral cards/containers; avoid nested elevated cards to prevent double-elevation.
@@ -29,16 +30,18 @@ Canonical Surfaces & Cards
 Design Tokens (CSS variables)
 Define tokens once and reference them everywhere. Do not bake colors directly into components.
 
-- Accent: `--color-accent-rgb`, `--color-accent` (for focus, selected, executed outlines).
+- Accent: `--color-accent` (Blue 500/600). Used for focus, active states, and selection.
 - Surfaces: `--surface-0/1/2` mapped to `--color-surface` and `--color-surface-elevated`.
-- Text: `--text-primary`, `--text-secondary`, `--text-muted`.
-- Status: `--status-success/warn/error/info` fg/bg pairs.
-- Borders/Focus: `--border-rgb`, `--ring`.
+- Text: `--text-primary` (Zinc-200 / Slate-900), `--text-secondary`, `--text-muted`.
+- Status: `--status-success/warn/error/info` fg/bg pairs. Distinct from Accent.
+- Borders/Focus: `--border-rgb`, `--ring` (matches Accent).
 - Legacy matrix tokens were removed; use the accent and surface variables above.
 
-Theme presets
+Theme configuration
 
-- `theme-modern-teal`, `theme-modern-blue`, `theme-modern-ember` applied on `<html>`; LocalStorage-backed toggle on dashboard.
+- Strict `light` and `dark` modes managed via `next-themes`.
+- Toggle available in sidebar (Sun/Moon).
+- Exports automatically inherit the active theme (WYSIWYG).
 
 Component Standards
 
