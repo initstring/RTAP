@@ -67,7 +67,7 @@ jobs:
       - name: Check for schema drift
         env:
           SHADOW_DATABASE_URL: postgresql://rtap:rtap@localhost:5432/rtap_ci_shadow
-        run: npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --exit-code --shadow-database-url "$SHADOW_DATABASE_URL"
+        run: npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code
 
       - name: Lint + Typecheck
         env:
