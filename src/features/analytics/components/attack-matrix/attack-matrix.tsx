@@ -67,7 +67,7 @@ export default function AttackMatrix() {
   }, [metrics, opsOnly, split, subIndex, usedSubs, subMetrics]);
   if (isLoading) return <div className="flex justify-center items-center h-64 text-[var(--color-text-secondary)]">Loading technique metrics...</div>;
   return (
-    <Card ref={cardRef}>
+    <Card ref={cardRef} data-export-unbounded>
       <CardContent className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Segmented
