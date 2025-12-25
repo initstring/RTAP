@@ -75,6 +75,7 @@ function applyExportDirectivesInPlace(root: HTMLElement) {
     applyStyleOverride(element, "max-width", "none", "important", overrides);
     applyStyleOverride(element, "height", "auto", "important", overrides);
     applyStyleOverride(element, "overflow", "visible", "important", overrides);
+    applyStyleOverride(element, "min-width", "fit-content", "important", overrides);
   });
 
   visible.forEach((element) => {

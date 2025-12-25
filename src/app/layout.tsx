@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 
 import { TRPCReactProvider } from "@/trpc/react";
@@ -14,6 +13,10 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
+
+import { Geist } from "next/font/google";
+import { ThemeProvider } from "next-themes";
+
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
@@ -23,18 +26,21 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geist.variable} theme-modern-teal`}>
-      <body>
-        <TRPCReactProvider>
-          <SessionProvider>
-            <SidebarProvider>
-              <AppLayout>
-                <main className="min-h-screen">{children}</main>
-              </AppLayout>
-            </SidebarProvider>
-          </SessionProvider>
-        </TRPCReactProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={geist.variable}>
+        <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false}>
+          <TRPCReactProvider>
+            <SessionProvider>
+              <SidebarProvider>
+                <AppLayout>
+                  <main className="min-h-screen">{children}</main>
+                </AppLayout>
+              </SidebarProvider>
+            </SessionProvider>
+          </TRPCReactProvider>
+        </ThemeProvider>
       </body>
     </html>
+
   );
 }
