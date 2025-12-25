@@ -11,8 +11,8 @@ import { logger } from "@/lib/logger";
 import TechniqueNode from "./technique-node";
 
 // React Flow imports
-import { ReactFlow, type Node, type Edge, Controls, Background, useNodesState, useEdgesState, addEdge, ConnectionMode, MarkerType, type OnConnect } from 'reactflow';
-import 'reactflow/dist/style.css';
+import { ReactFlow, type Node, type Edge, Controls, Background, useNodesState, useEdgesState, addEdge, ConnectionMode, MarkerType, type OnConnect } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 type Operation = RouterOutputs["operations"]["getById"];
 type Technique = Operation["techniques"][0] & { executedSuccessfully: boolean | null };
@@ -22,7 +22,7 @@ interface AttackFlowProps {
   canEdit?: boolean;
 }
 
-interface TechniqueNodeData {
+interface TechniqueNodeData extends Record<string, unknown> {
   technique: Technique;
 }
 
@@ -183,16 +183,16 @@ export default function AttackFlow({ operation, canEdit = true }: AttackFlowProp
 
       // Update edges with saved connections
       const savedEdges = savedLayout.edges.map((edge) => ({
-          ...edge,
-          type: 'smoothstep',
-          animated: false,
-          style: { stroke: 'var(--color-accent)', strokeWidth: 2 },
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: 'var(--color-accent)',
-          },
-        }));
-        setEdges(savedEdges);
+        ...edge,
+        type: 'smoothstep',
+        animated: false,
+        style: { stroke: 'var(--color-accent)', strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: 'var(--color-accent)',
+        },
+      }));
+      setEdges(savedEdges);
 
       setIsInitialized(true);
       setHasUnsavedChanges(false);
@@ -340,101 +340,101 @@ export default function AttackFlow({ operation, canEdit = true }: AttackFlowProp
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
-          {canEdit && (
-            <>
+              {canEdit && (
+                <>
+                  <Button
+                    variant={hasUnsavedChanges ? "primary" : "secondary"}
+                    size="sm"
+                    onClick={handleSaveState}
+                    disabled={saveLayoutMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    {saveLayoutMutation.isPending ? 'Saving...' : 'Save State'}
+                    {hasUnsavedChanges && !saveLayoutMutation.isPending && (
+                      <span className="ml-1 w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--status-warn-fg)" }} />
+                    )}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleResetLayout}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset Layout
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleClearConnections}
+                    disabled={edges.length === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear Connections
+                  </Button>
+                </>
+              )}
               <Button
-                variant={hasUnsavedChanges ? "primary" : "secondary"}
+                variant="secondary"
                 size="sm"
-                onClick={handleSaveState}
-                disabled={saveLayoutMutation.isPending}
+                onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center gap-2"
               >
-                <Save className="w-4 h-4" />
-                {saveLayoutMutation.isPending ? 'Saving...' : 'Save State'}
-                {hasUnsavedChanges && !saveLayoutMutation.isPending && (
-                  <span className="ml-1 w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--status-warn-fg)" }} />
+                {isExpanded ? (
+                  <>
+                    <Minimize className="w-4 h-4" />
+                    Exit Fullscreen
+                  </>
+                ) : (
+                  <>
+                    <Expand className="w-4 h-4" />
+                    Expand View
+                  </>
                 )}
               </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleResetLayout}
-                className="flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset Layout
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleClearConnections}
-                disabled={edges.length === 0}
-                className="flex items-center gap-2"
-              >
-                <X className="w-4 h-4" />
-                Clear Connections
-              </Button>
-            </>
-          )}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2"
-          >
-            {isExpanded ? (
-              <>
-                <Minimize className="w-4 h-4" />
-                Exit Fullscreen
-              </>
-            ) : (
-              <>
-                <Expand className="w-4 h-4" />
-                Expand View
-              </>
-            )}
-            </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {/* React Flow Canvas */}
           <div className={`${isExpanded ? 'h-[calc(100vh-12rem)]' : 'h-[700px]'} border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)]`}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          connectionMode={ConnectionMode.Loose}
-          fitView
-          attributionPosition="bottom-left"
-          proOptions={{ hideAttribution: true }}
-          className="bg-[var(--color-surface)]"
-          elementsSelectable={canEdit}
-          nodesDraggable={canEdit}
-          nodesConnectable={canEdit}
-          selectNodesOnDrag={false}
-          connectionLineStyle={{ stroke: 'var(--color-accent)', strokeWidth: 3, strokeDasharray: '5,5' }}
-          connectionRadius={25}
-          snapToGrid={true}
-          snapGrid={[20, 20]}
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-            animated: false,
-            style: { stroke: 'var(--color-accent)', strokeWidth: 2 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--color-accent)' }
-          }}
-        >
-          <Background
-            color="var(--color-accent)"
-            size={1}
-            gap={20}
-            style={{ opacity: 0.1 }}
-          />
-          <Controls />
-        </ReactFlow>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={nodeTypes}
+              connectionMode={ConnectionMode.Loose}
+              fitView
+              attributionPosition="bottom-left"
+              proOptions={{ hideAttribution: true }}
+              className="bg-[var(--color-surface)]"
+              elementsSelectable={canEdit}
+              nodesDraggable={canEdit}
+              nodesConnectable={canEdit}
+              selectNodesOnDrag={false}
+              connectionLineStyle={{ stroke: 'var(--color-accent)', strokeWidth: 3, strokeDasharray: '5,5' }}
+              connectionRadius={25}
+              snapToGrid={true}
+              snapGrid={[20, 20]}
+              defaultEdgeOptions={{
+                type: 'smoothstep',
+                animated: false,
+                style: { stroke: 'var(--color-accent)', strokeWidth: 2 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--color-accent)' }
+              }}
+            >
+              <Background
+                color="var(--color-accent)"
+                size={1}
+                gap={20}
+                style={{ opacity: 0.1 }}
+              />
+              <Controls />
+            </ReactFlow>
           </div>
 
           {/* Legend & Instructions */}
