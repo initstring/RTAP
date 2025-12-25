@@ -46,8 +46,13 @@ async function main() {
   try {
     console.info('[init] Ensuring initial data (admin + MITRE) ...');
     const { PrismaClient } = await import('@prisma/client');
+    const { PrismaPg } = await import('@prisma/adapter-pg');
+    const pg = await import('pg');
     const { ensureInitialized } = await import('@server/init/ensure-initialized');
-    const db = new PrismaClient({ log: ['error'] });
+
+    const pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
+    const db = new PrismaClient({ adapter, log: ['error'] });
     await ensureInitialized(db);
     await db.$disconnect();
     console.info('[init] Initialization complete.');

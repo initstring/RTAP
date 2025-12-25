@@ -8,6 +8,8 @@
 import 'dotenv/config';
 
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
 async function main() {
   const requiredEnv = ['AUTH_SECRET', 'DATABASE_URL'];
@@ -19,7 +21,9 @@ async function main() {
 
   const initialEmail = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase() ?? 'admin@example.com';
 
-  const db = new PrismaClient({ log: ['error'] });
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg(pool);
+  const db = new PrismaClient({ adapter, log: ['error'] });
   try {
     const adminUser = await db.user.findUnique({ where: { email: initialEmail } });
     if (!adminUser) {

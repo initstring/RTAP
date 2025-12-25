@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
 const DEFAULT_DATABASE_URL = "postgresql://rtap:rtap@localhost:5432/rtap_test";
 
@@ -18,7 +20,7 @@ async function runPrismaReset(databaseUrl: string) {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(
       prismaBin,
-      ["migrate", "reset", "--force", "--skip-generate", "--skip-seed", "--schema", "prisma/schema.prisma"],
+      ["migrate", "reset", "--force", "--schema", "prisma/schema.prisma"],
       {
         stdio: "inherit",
         env: { ...process.env, DATABASE_URL: databaseUrl },
@@ -41,8 +43,17 @@ const isDuplicateDatabaseError = (error: unknown) => {
     return false;
   }
 
-  const prismaError = error as { code?: string; meta?: { code?: string } };
-  return prismaError.code === "42P04" || prismaError.meta?.code === "42P04";
+  const prismaError = error as { code?: string; meta?: { code?: string }; message?: string };
+  if (prismaError.code === "42P04" || prismaError.meta?.code === "42P04") {
+    return true;
+  }
+
+  // Handle Prisma v7 adapter error wrapping
+  if (prismaError.code === "P2010" && prismaError.message?.includes("42P04")) {
+    return true;
+  }
+
+  return false;
 };
 
 async function ensureDatabaseExists(databaseUrl: string) {
@@ -57,7 +68,9 @@ async function ensureDatabaseExists(databaseUrl: string) {
   adminUrl.pathname = "/postgres";
   adminUrl.search = "";
 
-  const prisma = new PrismaClient({ datasources: { db: { url: adminUrl.toString() } } });
+  const pool = new pg.Pool({ connectionString: adminUrl.toString() });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
 
   try {
     await prisma.$executeRawUnsafe(`CREATE DATABASE "${database}"`);

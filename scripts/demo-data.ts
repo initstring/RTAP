@@ -6,8 +6,12 @@ import {
   OutcomeType,
   OutcomeStatus,
 } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-const db = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
 
 async function main() {
   const user = await db.user.findFirst();
@@ -861,24 +865,24 @@ async function seedOperations(ctx: SeedCtx) {
             executedSuccessfully: t.executedSuccessfully ?? undefined,
             outcomes: t.outcome
               ? {
-                  create: {
-                    type: t.outcome.type,
-                    status: t.outcome.status,
-                    detectionTime: t.outcome.detection
-                      ? new Date(t.outcome.detection)
-                      : null,
-                    notes: t.outcome.notes,
-                    logData: t.outcome.log ?? undefined,
-                    tools: {
-                      connect: t.outcome.tools.map((n) => ({ id: tools[n] })),
-                    },
-                    logSources: {
-                      connect: t.outcome.logs.map((n) => ({
-                        id: logSources[n],
-                      })),
-                    },
+                create: {
+                  type: t.outcome.type,
+                  status: t.outcome.status,
+                  detectionTime: t.outcome.detection
+                    ? new Date(t.outcome.detection)
+                    : null,
+                  notes: t.outcome.notes,
+                  logData: t.outcome.log ?? undefined,
+                  tools: {
+                    connect: t.outcome.tools.map((n) => ({ id: tools[n] })),
                   },
-                }
+                  logSources: {
+                    connect: t.outcome.logs.map((n) => ({
+                      id: logSources[n],
+                    })),
+                  },
+                },
+              }
               : undefined,
           })),
         },
