@@ -72,7 +72,7 @@
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.0",
+    "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.16",
     "eslint": "^9.39.1",
     "eslint-config-next": "^15.5.7",
