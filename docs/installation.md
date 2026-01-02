@@ -1,6 +1,8 @@
 # Installation
 
-Follow these instructions to set up Red Team Assessment Platform (RTAP) in local development or production environments. For development environments, additional information is available [here](./development.md).
+Follow these instructions to set up Red Team Assessment Platform (RTAP) for production or local testing purposes. This uses pre-built Docker containers.
+
+For development environments, you'll probably instead want to run a local npm dev server - not a pre-built container. Additional information is available [here](./development.md).
 
 ## Docker Installation
 
