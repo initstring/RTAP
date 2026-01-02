@@ -1,6 +1,6 @@
 # Installation
 
-Follow these instructions to set up Red Team Assessment Platform (RTAP) in local development or production environments.
+Follow these instructions to set up Red Team Assessment Platform (RTAP) in local development or production environments. For development environments, additional information is available [here](./development.md).
 
 ## Docker Installation
 
@@ -24,18 +24,20 @@ docker exec rtap-web npm run seed:demo
 
 ### How it Works
 
-Let's be the change we want to see in the world. There is no support for passwords! Authentication is SSO-first (Google OAuth today), with an optional demo-mode button for trials.
+Authentication is SSO-only, with an optional demo-mode button for trials.
+
+Currently, only Google SSO is enabled. However, [NextAuth supports tons of providers](https://next-auth.js.org/v3/configuration/providers#oauth-providers). Open an issue and I will add providers for you.
 
 **Admin bootstrap:**
 
 - On first run, the application creates an admin account using `INITIAL_ADMIN_EMAIL` from your `.env`.
-- If using Google SSO, sign in with the matching Google account.
+- If using SSO, sign in with the matching account and it will just work.
 - If using demo mode, click "Sign in as Demo Admin" (requires `ENABLE_DEMO_MODE=true`).
 
 **Ongoing user management:**
 
 - Once logged in as admin, you can create additional users.
-- Google SSO users: log in with the matching Google email.
+- SSO users: log in with the matching email.
 
 Accounts must be created inside the platform; SSO logins for unknown emails will be rejected.
 
