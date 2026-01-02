@@ -8,7 +8,7 @@ From the repository root:
 
 ```sh
 # Copy the local dev env file and replace secrets
-cp .env.example .env
+cp .env.example-dev .env
 
 # Install dependencies
 npm install
