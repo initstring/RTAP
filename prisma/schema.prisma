@@ -56,7 +56,6 @@ model User {
   sessions       Session[]
   operations     Operation[]
   groups         UserGroup[] // User's group memberships
-  authenticators Authenticator[]
 }
 
 model VerificationToken {
@@ -65,20 +64,6 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-}
-
-model Authenticator {
-  id                   String  @id @default(cuid())
-  credentialID         String  @unique
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // MITRE ATT&CK Framework Models
