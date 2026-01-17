@@ -1,48 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { z } from "zod";
 import { api } from "@/trpc/react";
 import { Button, Card, CardContent, Input, Label } from "@components/ui";
 import ConfirmModal from "@components/ui/confirm-modal";
 import SettingsHeader from "./settings-header";
 import InlineActions from "@components/ui/inline-actions";
 import { UserRole } from "@prisma/client";
-import { isUserRole, userWithPasskeySchema, type UserWithPasskey } from "@features/shared/users/user-validators";
+import { isUserRole, userProfileSchema, type UserProfile } from "@features/shared/users/user-validators";
 
-const EMPTY_USERS: UserWithPasskey[] = [];
-const loginLinkSchema = z.object({
-  url: z.string(),
-  expires: z.union([z.date(), z.string(), z.number()]),
-});
-const createUserResponseSchema = z.object({ user: userWithPasskeySchema, loginLink: loginLinkSchema });
-
-interface PendingLink {
-  email: string;
-  url: string;
-  expires: string;
-}
-
-const toIsoString = (value: Date | string | number) => {
-  if (typeof value === "number") {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toISOString();
-  }
-
-  return value instanceof Date ? value.toISOString() : value;
-};
+const EMPTY_USERS: UserProfile[] = [];
 
 export default function UsersTab() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserWithPasskey | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<UserWithPasskey | null>(null);
-  const [pendingLink, setPendingLink] = useState<PendingLink | null>(null);
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<UserProfile | null>(null);
 
   // Queries
   const usersQuery = api.users.list.useQuery();
-  const parsedUsers = userWithPasskeySchema.array().safeParse(usersQuery.data);
-  let users: UserWithPasskey[] = EMPTY_USERS;
+  const parsedUsers = userProfileSchema.array().safeParse(usersQuery.data);
+  let users: UserProfile[] = EMPTY_USERS;
   if (parsedUsers.success) {
     users = parsedUsers.data;
   }
@@ -52,17 +29,10 @@ export default function UsersTab() {
   const utils = api.useUtils();
   const createMutation = api.users.create.useMutation({
     onSuccess: (data) => {
-      const parsed = createUserResponseSchema.safeParse(data);
+      const parsed = userProfileSchema.safeParse(data);
       void utils.users.invalidate();
-      if (!parsed.success) {
-        return;
-      }
+      if (!parsed.success) return;
       setIsCreateModalOpen(false);
-      setPendingLink({
-        email: parsed.data.user.email,
-        url: parsed.data.loginLink.url,
-        expires: toIsoString(parsed.data.loginLink.expires),
-      });
     },
   });
 
@@ -77,21 +47,6 @@ export default function UsersTab() {
     onSuccess: () => {
       void utils.users.invalidate();
       setConfirmDelete(null);
-    },
-  });
-
-  const loginLinkMutation = api.users.issueLoginLink.useMutation({
-    onSuccess: (data, variables) => {
-      void utils.users.invalidate();
-      const parsedLink = loginLinkSchema.safeParse(data);
-      const user = users.find((u) => u.id === variables.id);
-      if (parsedLink.success) {
-        setPendingLink({
-          email: user?.email ?? "",
-          url: parsedLink.data.url,
-          expires: toIsoString(parsedLink.data.expires),
-        });
-      }
     },
   });
 
@@ -111,22 +66,6 @@ export default function UsersTab() {
     deleteMutation.mutate({ id });
   };
 
-  const handleIssueLink = (user: UserWithPasskey) => {
-    loginLinkMutation.mutate({ id: user.id });
-  };
-
-  const copyLink = async () => {
-    if (!pendingLink) return;
-    try {
-      await navigator.clipboard.writeText(pendingLink.url);
-      setCopyStatus("copied");
-      setTimeout(() => setCopyStatus("idle"), 1500);
-    } catch {
-      setCopyStatus("error");
-      setTimeout(() => setCopyStatus("idle"), 1500);
-    }
-  };
-
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case UserRole.ADMIN:
@@ -139,7 +78,7 @@ export default function UsersTab() {
     }
   };
 
-  const renderLastLogin = (lastLogin: UserWithPasskey["lastLogin"]) => {
+  const renderLastLogin = (lastLogin: UserProfile["lastLogin"]) => {
     if (!lastLogin) return "Never";
 
     if (lastLogin instanceof Date) {
@@ -168,25 +107,6 @@ export default function UsersTab() {
     <div className="space-y-6">
       <SettingsHeader title="Users" onNew={() => setIsCreateModalOpen(true)} />
 
-      {pendingLink && (
-        <Card className="border border-[var(--color-border)] bg-[var(--color-surface-elevated)]">
-          <CardContent className="p-4 space-y-3">
-            <div>
-              <p className="text-sm text-[var(--color-text-secondary)]">One-time login link for {pendingLink.email}</p>
-              <Input readOnly value={pendingLink.url} className="mt-2" />
-            </div>
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="secondary" size="sm" onClick={copyLink}>
-                {copyStatus === "copied" ? "Copied" : copyStatus === "error" ? "Copy failed" : "Copy link"}
-              </Button>
-              <span className="text-xs text-[var(--color-text-muted)]">
-                Expires at {new Date(pendingLink.expires).toLocaleString()}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="grid gap-4">
         {users.map((user) => (
           <Card key={user.id}>
@@ -203,21 +123,11 @@ export default function UsersTab() {
                   </div>
                   <p className="text-sm text-[var(--color-text-secondary)]">{user.email}</p>
                   <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                    Last login: {renderLastLogin(user.lastLogin)} • Passkeys {user.passkeyCount > 0 ? "Enrolled" : "Not enrolled"}
+                    Last login: {renderLastLogin(user.lastLogin)}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <InlineActions onEdit={() => setEditingUser(user)} onDelete={() => setConfirmDelete(user)} />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleIssueLink(user)}
-                    disabled={loginLinkMutation.isPending && loginLinkMutation.variables?.id === user.id}
-                  >
-                    {loginLinkMutation.isPending && loginLinkMutation.variables?.id === user.id
-                      ? "Generating..."
-                      : "Generate login link"}
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -271,7 +181,7 @@ type UserModalSubmitData = { name: string; email: string; role: UserRole };
 
 interface UserModalProps {
   title: string;
-  initialData?: UserWithPasskey;
+  initialData?: UserProfile;
   onSubmit: (data: UserModalSubmitData) => void;
   onCancel: () => void;
   isLoading: boolean;

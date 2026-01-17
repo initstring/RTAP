@@ -16,7 +16,7 @@ Red Team Assessment Platform (RTAP) is built for internal Red Teams to plan and 
 
 User Docs:
 - [Installation](docs/installation.md)
-- [Getting Started Workflow](docs/getting-started.md)
+- [Getting Started Workflow](docs/getting-started.md) (look here for UI screenshots)
 
 Development Docs:
 - [Development](docs/development.md)
@@ -41,7 +41,7 @@ Initially based on the T3 Stack - Next.js, tRPC, Prisma, TypeScript. Type-safe A
 
 Local development runs the Next.js dev server against a local PostgreSQL container. Production workloads also use Docker (web + Postgres) behind your own reverse proxy.
 
-Authentication is all passwordless using NextAuth - with an option for passkeys and/or OAuth providers (initial support includes Google SSO).
+Authentication is passwordless and SSO-only using NextAuth. For development and trials you can enable a demo admin sign-in button via `ENABLE_DEMO_MODE=true`.
 
 ## Licensing
 

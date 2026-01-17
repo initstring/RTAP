@@ -8,18 +8,12 @@ import {
 } from "@/server/api/trpc";
 import { createUser as createUserService, updateUser as updateUserService, defaultUserSelect } from "@/server/services/userService";
 import { auditEvent, logger } from "@/server/logger";
-import { createLoginLink } from "@/server/auth/login-link";
-
-function mapUser<T extends { _count: { authenticators: number } }>(user: T) {
-  const { _count, ...rest } = user;
-  return { ...rest, passkeyCount: _count.authenticators };
-}
 
 export const usersRouter = createTRPCRouter({
   // List all users (Admin only)
   list: adminProcedure.query(async ({ ctx }) => {
     const users = await ctx.db.user.findMany({ select: defaultUserSelect(), orderBy: [{ role: "asc" }, { name: "asc" }] });
-    return users.map(mapUser);
+    return users;
   }),
 
   // Get current user profile (any authenticated user)
@@ -32,11 +26,10 @@ export const usersRouter = createTRPCRouter({
         email: true,
         role: true,
         lastLogin: true,
-        _count: { select: { authenticators: true } },
       },
     });
     if (!me) throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found" });
-    return mapUser(me);
+    return me;
   }),
 
   // Create new user (Admin only)
@@ -48,17 +41,15 @@ export const usersRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const created = await createUserService(ctx.db, input);
-      const loginLink = await createLoginLink(ctx.db, { email: created.email });
-      const user = mapUser(created);
       logger.info(
         auditEvent(ctx, "sec.user.create", {
-          targetUserId: user.id,
-          targetEmail: user.email,
-          targetName: user.name,
+          targetUserId: created.id,
+          targetEmail: created.email,
+          targetName: created.name,
         }),
         "User created",
       );
-      return { user, loginLink };
+      return created;
     }),
 
   // Update user (Admin only)
@@ -75,16 +66,15 @@ export const usersRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot remove admin role from your own account" });
       }
       const updated = await updateUserService(ctx.db, input);
-      const user = mapUser(updated);
       logger.info(
         auditEvent(ctx, "sec.user.update", {
-          targetUserId: user.id,
-          targetEmail: user.email,
-          targetName: user.name,
+          targetUserId: updated.id,
+          targetEmail: updated.email,
+          targetName: updated.name,
         }),
         "User updated",
       );
-      return user;
+      return updated;
     }),
 
   // Delete user (Admin only)
@@ -128,25 +118,6 @@ export const usersRouter = createTRPCRouter({
         "User deleted",
       );
       return deleted;
-    }),
-
-  issueLoginLink: adminProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({ where: { id: input.id }, select: { id: true, email: true, name: true } });
-      if (!user?.email) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-      }
-      const loginLink = await createLoginLink(ctx.db, { email: user.email });
-      logger.info(
-        auditEvent(ctx, "sec.user.login_link_issue", {
-          targetUserId: user.id,
-          targetEmail: user.email,
-          targetName: user.name,
-        }),
-        "Admin issued user login link",
-      );
-      return loginLink;
     }),
 
   // Get user statistics (Admin only)

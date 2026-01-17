@@ -1,6 +1,8 @@
 # Installation
 
-Follow these instructions to set up Red Team Assessment Platform (RTAP) in local development or production environments.
+Follow these instructions to set up Red Team Assessment Platform (RTAP) for production or local testing purposes. This uses pre-built Docker containers.
+
+For development environments, you'll probably instead want to run a local npm dev server - not a pre-built container. Additional information is available [here](./development.md).
 
 ## Docker Installation
 
@@ -17,36 +19,27 @@ docker compose up -d
 # Optionally - seed demo taxonomy/operation data (FOR DEMO PURPOSES ONLY)
 docker exec rtap-web npm run seed:demo
 
-# If not using SSO, generate 1-time login URL to set up your first passkey
-docker exec rtap-web npm run generate-admin-login
+# Optional: enable demo admin login for trials (see Authentication below)
 ```
 
 ## Authentication
 
 ### How it Works
 
-Let's be the change we want to see in the world. There is no support for passwords! Currently supported options are:
+Authentication is SSO-only, with an optional demo-mode button for trials.
 
-- Passkeys (required TLS or localhost)
-- Google OAuth (SSO)
-
-The platform uses NextAuth, so adding additional SSO providers would be pretty easy.
+Currently, only Google SSO is enabled. However, [NextAuth supports tons of providers](https://next-auth.js.org/v3/configuration/providers#oauth-providers). Open an issue and I will add providers for you.
 
 **Admin bootstrap:**
 
 - On first run, the application creates an admin account using `INITIAL_ADMIN_EMAIL` from your `.env`.
-- If using Google SSO, just sign in with the matching Google account.
-- If using passkeys, you must generate a one-time login URL (`npm run generate-admin-login`) and register a passkey for that account.
+- If using SSO, sign in with the matching account and it will just work.
+- If using demo mode, click "Sign in as Demo Admin" (requires `ENABLE_DEMO_MODE=true`).
 
 **Ongoing user management:**
 
 - Once logged in as admin, you can create additional users.
-- Google SSO users: just log in with the matching Google email.
-- Passkey users: must receive a one-time login URL from the admin, then register a passkey.
-
-**Recovery:**
-
-- If locked out, re-run `npm run generate-admin-login` to obtain another single-use login URL for the initial admin account.
+- SSO users: log in with the matching email.
 
 Accounts must be created inside the platform; SSO logins for unknown emails will be rejected.
 
@@ -55,10 +48,10 @@ Accounts must be created inside the platform; SSO logins for unknown emails will
 Authentication options are configured in your `.env` file. The names are slightly different depending on whether you are doing local development or docker compose - the correct values are provided in the appropriate `.env-example` files.
 
 ```
-# Enable or disable passkey authentication
-AUTH_PASSKEYS_ENABLED=true
+# Demo mode: expose a demo admin login button on the sign-in page
+ENABLE_DEMO_MODE=false
 
-# Configuring the follow values will enable Google SSO
+# Configuring the following values will enable Google SSO
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 ```

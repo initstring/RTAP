@@ -10,25 +10,15 @@ vi.mock("@/server/db", () => ({
   },
 }));
 
-vi.mock("@/server/auth/login-link", () => ({
-  LOGIN_LINK_PROVIDER_ID: "login-link",
-  createLoginLink: vi.fn().mockResolvedValue({
-    url: "https://app/api/auth/callback/login-link?token=abc",
-    expires: new Date("2025-01-01T00:00:00Z"),
-  }),
-}));
-
 const { db } = await import("@/server/db");
 const mockDb = vi.mocked(db, true);
-const { createLoginLink } = await import("@/server/auth/login-link");
-const mockCreateLoginLink = vi.mocked(createLoginLink);
 
 describe("Users Router — create & validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("creates new user and returns login link", async () => {
+  it("creates new user", async () => {
     const newUserData = { email: "newuser@test.com", name: "New User", role: UserRole.OPERATOR } as const;
     const mockCreatedUser = {
       id: "new-user-id",
@@ -36,7 +26,6 @@ describe("Users Router — create & validation", () => {
       email: newUserData.email,
       role: newUserData.role,
       lastLogin: null,
-      _count: { authenticators: 0 },
     };
     mockDb.user.findUnique.mockResolvedValue(null);
     mockDb.user.create.mockResolvedValue(mockCreatedUser);
@@ -44,16 +33,13 @@ describe("Users Router — create & validation", () => {
     const caller = usersRouter.createCaller(ctx);
     const result = await caller.create(newUserData);
 
-    expect(result.user).toEqual({
+    expect(result).toEqual({
       id: "new-user-id",
       name: "New User",
       email: "newuser@test.com",
       role: UserRole.OPERATOR,
       lastLogin: null,
-      passkeyCount: 0,
     });
-    expect(result.loginLink.url).toContain("token=abc");
-    expect(mockCreateLoginLink).toHaveBeenCalledWith(mockDb, { email: newUserData.email });
   });
 
   it("normalizes email casing before persisting", async () => {
@@ -65,7 +51,6 @@ describe("Users Router — create & validation", () => {
       email: normalizedEmail,
       role: newUserData.role,
       lastLogin: null,
-      _count: { authenticators: 0 },
     };
     mockDb.user.findUnique.mockResolvedValue(null);
     mockDb.user.create.mockResolvedValue(mockCreatedUser);
@@ -77,7 +62,6 @@ describe("Users Router — create & validation", () => {
     expect(mockDb.user.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ email: normalizedEmail }) }),
     );
-    expect(mockCreateLoginLink).toHaveBeenCalledWith(mockDb, { email: normalizedEmail });
   });
 
   it("throws when email already exists", async () => {
@@ -97,7 +81,6 @@ describe("Users Router — create & validation", () => {
       email: "test@test.com",
       role: UserRole.VIEWER,
       lastLogin: null,
-      _count: { authenticators: 0 },
     });
     const ctx = createTestContext(mockDb, UserRole.ADMIN);
     const caller = usersRouter.createCaller(ctx);

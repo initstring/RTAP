@@ -18,7 +18,7 @@ Plan and execute red‑team operations and measure defensive effectiveness (dete
 
 - Next.js 15 (App Router) + TypeScript
 - tRPC v11 (Zod validation); Prisma targeting PostgreSQL (local dev uses a Docker container, production uses managed Postgres)
-- NextAuth (passkey-first, with optional OAuth)
+- NextAuth (SSO-first, with optional demo admin login in development)
 - Access helpers enforce scoping and rights: `getAccessibleOperationFilter`, `checkOperationAccess`.
 
 ### Conventions (where things live)

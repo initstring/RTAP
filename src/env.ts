@@ -20,8 +20,8 @@ export const env = createEnv({
     // Logging: default to debug in dev, info in prod; override with LOG_LEVEL
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
     AUTH_URL: z.string().url().optional(),
-    // Optional: toggle passkey provider (default disabled)
-    AUTH_PASSKEYS_ENABLED: z.enum(["true", "false"]).optional(),
+    // Optional: demo-mode login button (default disabled)
+    ENABLE_DEMO_MODE: z.enum(["true", "false"]).optional(),
     // Optional: Google OAuth client credentials (registers provider when present)
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -46,7 +46,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
     AUTH_URL: process.env.AUTH_URL,
-    AUTH_PASSKEYS_ENABLED: process.env.AUTH_PASSKEYS_ENABLED,
+    ENABLE_DEMO_MODE: process.env.ENABLE_DEMO_MODE,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   },

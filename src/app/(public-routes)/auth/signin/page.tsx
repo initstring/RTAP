@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
+import { env } from "@/env";
 import SignInPageClient from "@features/shared/auth/sign-in-page";
 
 export default async function SignInPage(props: { searchParams?: Promise<{ callbackUrl?: string; error?: string }> }) {
@@ -9,13 +10,13 @@ export default async function SignInPage(props: { searchParams?: Promise<{ callb
   }
 
   const { callbackUrl = "/", error } = (await props.searchParams) ?? {};
-  const passkeysEnabled = process.env.AUTH_PASSKEYS_ENABLED === "true";
-  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const demoEnabled = env.ENABLE_DEMO_MODE === "true";
+  const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
   return (
     <SignInPageClient
-      passkeysEnabled={passkeysEnabled}
       googleEnabled={googleEnabled}
+      demoEnabled={demoEnabled}
       callbackUrl={callbackUrl}
       initialError={error}
     />

@@ -17,8 +17,7 @@ docker compose -f deploy/docker/docker-compose.dev.yml up -d
 # Apply migrations and seed first-run admin + MITRE content
 npm run init
 
-# If not using SSO, generate a one-time login URL to enroll your first passkey
-npm run generate-admin-login
+# Optional: enable demo admin login (set ENABLE_DEMO_MODE=true in .env)
 
 # Optionally seed demo taxonomy/operation data (FOR DEMO PURPOSES ONLY)
 npm run seed:demo

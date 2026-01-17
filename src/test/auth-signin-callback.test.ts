@@ -22,27 +22,15 @@ describe("NextAuth signIn callback", () => {
     expect(result).toBe(true);
   });
 
-  it("denies passkey sign-in when passkeys are disabled", async () => {
+  it("denies demo sign-in when demo mode is disabled", async () => {
     const { authConfig } = await import("@/server/auth/config");
     const signInCb = authConfig.callbacks?.signIn;
     if (!signInCb) throw new Error("signIn callback missing");
     const res = await signInCb({
-      account: { provider: "passkey" } as any,
+      account: { provider: "demo" } as any,
       user: { id: "u1", email: "user@test.com" } as AdapterUser,
     });
     expect(res).toBe(false);
-  });
-
-  it("allows login link when user exists", async () => {
-    mockDb.user.findUnique.mockResolvedValue({ id: "u1", email: "user@test.com", role: "ADMIN" });
-    const { authConfig } = await import("@/server/auth/config");
-    const signInCb = authConfig.callbacks?.signIn;
-    if (!signInCb) throw new Error("signIn callback missing");
-    const res = await signInCb({
-      account: { provider: "login-link" } as any,
-      user: { email: "user@test.com" } as AdapterUser,
-    });
-    expect(res).toBe(true);
   });
 
   it("allows Google sign-in for existing user and marks email verified", async () => {
