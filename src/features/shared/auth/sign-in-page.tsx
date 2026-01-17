@@ -7,6 +7,8 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from "@components/ui
 
 interface Props {
   googleEnabled: boolean;
+  githubEnabled: boolean;
+  gitlabEnabled: boolean;
   keycloakEnabled: boolean;
   oktaEnabled: boolean;
   demoEnabled: boolean;
@@ -14,16 +16,20 @@ interface Props {
   initialError?: string;
 }
 
-type OAuthProviderId = "google" | "keycloak" | "okta";
+type OAuthProviderId = "google" | "github" | "gitlab" | "keycloak" | "okta";
 
 const oauthOptions: Array<{ id: OAuthProviderId; label: string }> = [
   { id: "google", label: "Continue with Google" },
+  { id: "github", label: "Continue with GitHub" },
+  { id: "gitlab", label: "Continue with GitLab" },
   { id: "keycloak", label: "Continue with Keycloak" },
   { id: "okta", label: "Continue with Okta" },
 ];
 
 export default function SignInPageClient({
   googleEnabled,
+  githubEnabled,
+  gitlabEnabled,
   keycloakEnabled,
   oktaEnabled,
   demoEnabled,
@@ -79,6 +85,8 @@ export default function SignInPageClient({
 
   const oauthEnabled: Record<OAuthProviderId, boolean> = {
     google: googleEnabled,
+    github: githubEnabled,
+    gitlab: gitlabEnabled,
     keycloak: keycloakEnabled,
     okta: oktaEnabled,
   };

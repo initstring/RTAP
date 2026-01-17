@@ -1,6 +1,8 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import type { JWT as NextAuthJWT } from "next-auth/jwt";
+import GitHubProvider from "next-auth/providers/github";
+import GitLabProvider from "next-auth/providers/gitlab";
 import GoogleProvider from "next-auth/providers/google";
 import KeycloakProvider from "next-auth/providers/keycloak";
 import OktaProvider from "next-auth/providers/okta";
@@ -42,7 +44,7 @@ declare module "@auth/core/adapters" {
 type AugmentedJWT = NextAuthJWT & { role?: UserRole };
 
 const demoModeEnabled = env.ENABLE_DEMO_MODE === "true";
-const oauthProviders = new Set(["google", "keycloak", "okta"]);
+const oauthProviders = new Set(["google", "github", "gitlab", "keycloak", "okta"]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -201,6 +203,25 @@ export const authConfig = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             // We trust the locally provisioned accounts and block unknown e-mails in the
             // sign-in callback, so allow Auth.js to link Google users directly by e-mail.
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+      ? [
+          GitHubProvider({
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(process.env.GITLAB_CLIENT_ID && process.env.GITLAB_CLIENT_SECRET
+      ? [
+          GitLabProvider({
+            clientId: process.env.GITLAB_CLIENT_ID,
+            clientSecret: process.env.GITLAB_CLIENT_SECRET,
+            issuer: process.env.GITLAB_ISSUER,
             allowDangerousEmailAccountLinking: true,
           }),
         ]

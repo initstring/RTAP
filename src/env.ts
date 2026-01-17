@@ -25,6 +25,13 @@ export const env = createEnv({
     // Optional: Google OAuth client credentials (registers provider when present)
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
+    // Optional: GitHub OAuth client credentials (registers provider when present)
+    GITHUB_CLIENT_ID: z.string().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
+    // Optional: GitLab OAuth client credentials (registers provider when present)
+    GITLAB_CLIENT_ID: z.string().optional(),
+    GITLAB_CLIENT_SECRET: z.string().optional(),
+    GITLAB_ISSUER: z.string().optional(),
     // Optional: Keycloak OAuth client credentials (registers provider when present)
     KEYCLOAK_CLIENT_ID: z.string().optional(),
     KEYCLOAK_CLIENT_SECRET: z.string().optional(),
@@ -57,6 +64,11 @@ export const env = createEnv({
     ENABLE_DEMO_MODE: process.env.ENABLE_DEMO_MODE,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+    GITLAB_CLIENT_ID: process.env.GITLAB_CLIENT_ID,
+    GITLAB_CLIENT_SECRET: process.env.GITLAB_CLIENT_SECRET,
+    GITLAB_ISSUER: process.env.GITLAB_ISSUER,
     KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
     KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
     KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
