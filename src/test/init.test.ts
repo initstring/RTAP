@@ -12,6 +12,7 @@ vi.mock("@/lib/mitreStix", () => ({
 describe("ensureInitialized", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetModules();
     process.env.INITIAL_ADMIN_EMAIL = "admin@example.com";
   });
 
