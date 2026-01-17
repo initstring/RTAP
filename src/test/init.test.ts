@@ -41,4 +41,21 @@ describe("ensureInitialized", () => {
     expect(mitreTechnique.upsert).toHaveBeenCalled();
     expect(mitreSubTechnique.upsert).toHaveBeenCalled();
   });
+
+  it("skips admin creation when INITIAL_ADMIN_EMAIL is unset", async () => {
+    delete process.env.INITIAL_ADMIN_EMAIL;
+    const user = { upsert: vi.fn() };
+    const mitreTactic = { count: vi.fn().mockResolvedValue(0), upsert: vi.fn() };
+    const mitreTechnique = { upsert: vi.fn() };
+    const mitreSubTechnique = { upsert: vi.fn() };
+    const db = { user, mitreTactic, mitreTechnique, mitreSubTechnique } as unknown as PrismaClient;
+
+    const { ensureInitialized } = await import("@/server/init/ensure-initialized");
+    await ensureInitialized(db);
+
+    expect(user.upsert).not.toHaveBeenCalled();
+    expect(mitreTactic.upsert).toHaveBeenCalled();
+    expect(mitreTechnique.upsert).toHaveBeenCalled();
+    expect(mitreSubTechnique.upsert).toHaveBeenCalled();
+  });
 });

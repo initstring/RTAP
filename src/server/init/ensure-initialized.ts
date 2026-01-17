@@ -15,16 +15,18 @@ export function ensureInitialized(db: PrismaClient): Promise<void> {
 
   initPromise = (async () => {
     // 1) Ensure the bootstrap admin exists (every init, no auto-provisioning outside env)
-    const defaultEmail = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase() ?? "admin@example.com";
-    await db.user.upsert({
-      where: { email: defaultEmail },
-      update: { role: UserRole.ADMIN },
-      create: {
-        email: defaultEmail,
-        name: "Admin User",
-        role: UserRole.ADMIN,
-      },
-    });
+    const defaultEmail = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();
+    if (defaultEmail) {
+      await db.user.upsert({
+        where: { email: defaultEmail },
+        update: { role: UserRole.ADMIN },
+        create: {
+          email: defaultEmail,
+          name: "Admin User",
+          role: UserRole.ADMIN,
+        },
+      });
+    }
 
     // 2) Ensure MITRE data exists
     const tacticCount = await db.mitreTactic.count();
