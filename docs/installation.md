@@ -26,15 +26,15 @@ Minimum values to edit:
 
 ### Choose authentication mode
 
-RTAP supports SSO or a demo login button. Supported SSO providers today are Google, Keycloak, and Okta. If you need another provider, open an issue and we can add it.
+RTAP supports SSO or a demo login button. Supported SSO providers today are Google, GitHub, GitLab, Keycloak, and Okta. If you need another provider, open an issue and we can add it.
 
-- **SSO (recommended):** configure your provider's details (like client ID/secret + issuer when required) using the variable names provided in the .env file.
+- **SSO (recommended):** configure your provider's details (client ID/secret, plus issuer for Keycloak/Okta) using the variable names provided in the .env file.
 - **Demo mode:** set `ENABLE_DEMO_MODE=true`. This exposes a “Sign in as Demo Admin” button and **anyone with access to the sign-in page can log in without an account**. Use only for isolated testing or demos.
 
-For Google SSO, configure the following in the Google Cloud console:
+For any SSO provider, configure the following in your identity provider console:
 
 - Authorized JavaScript origins: matches `AUTH_URL` from `.env`.
-- Authorized redirect URIs: `AUTH_URL` + `/api/auth/callback/google`.
+- Authorized redirect URIs: `AUTH_URL` + `/api/auth/callback/<provider>` (for example, `/api/auth/callback/github`).
 
 ### Start the containers
 
