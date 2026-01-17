@@ -71,7 +71,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.0",
     "@vitest/coverage-v8": "^4.0.16",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-config-next": "^15.5.7",
     "eslint-plugin-boundaries": "^5.3.0",
     "jsdom": "^27.3.0",
