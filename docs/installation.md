@@ -36,6 +36,8 @@ For any SSO provider, configure the following in your identity provider console:
 - Authorized JavaScript origins: matches `AUTH_URL` from `.env`.
 - Authorized redirect URIs: `AUTH_URL` + `/api/auth/callback/<provider>` (for example, `/api/auth/callback/github`).
 
+SSO will NOT auto-create users. They must be added first inside the platform, and then SSO with matching emails will just work. For the first login to the platform, ensure `INTIAL_ADMIN_EMAIL` matches whatever SSO account you want to use to log in. One logged in, you can manually add addition users who will then be permitted to log in via SSO with matching email addresses.
+
 ### Start the containers
 
 From the repository root:
