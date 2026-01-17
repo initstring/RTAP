@@ -12,7 +12,7 @@ vi.mock("@/lib/mitreStix", () => ({
 describe("ensureInitialized", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.INITIAL_ADMIN_EMAIL;
+    process.env.INITIAL_ADMIN_EMAIL = "admin@example.com";
   });
 
   it("creates admin and seeds MITRE when empty", async () => {
@@ -31,7 +31,7 @@ describe("ensureInitialized", () => {
       create: Record<string, unknown>;
     } | undefined;
     expect(upsertArg?.create).toMatchObject({
-      email: "admin@example.com",
+      email: process.env.INITIAL_ADMIN_EMAIL,
       name: "Admin User",
       role: "ADMIN",
     });
