@@ -52,3 +52,13 @@ docker exec rtap-web npm run seed:demo
 
 - Server logs emit to stdout/stderr (structured JSON in production, pretty in development). Rely on Docker and the host OS for collection and rotation.
 - Log level defaults: `debug` in development, `info` in production. Override with `LOG_LEVEL`.
+
+## Troubleshooting
+
+### I changed `INITIAL_ADMIN_EMAIL` or SSO and can’t sign in
+
+The bootstrap admin account is created during initialization. If you need to re-bootstrap it (for example after changing `INITIAL_ADMIN_EMAIL`), re-run the init script inside the web container:
+
+```sh
+docker exec rtap-web npm run init
+```

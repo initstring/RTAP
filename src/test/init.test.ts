@@ -10,13 +10,15 @@ vi.mock("@/lib/mitreStix", () => ({
 }));
 
 describe("ensureInitialized", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    delete process.env.INITIAL_ADMIN_EMAIL;
+    process.env.INITIAL_ADMIN_EMAIL = "admin@example.com";
+    const { resetInitializationForTests } = await import("@/server/init/ensure-initialized");
+    resetInitializationForTests();
   });
 
-  it("creates admin when no users and seeds MITRE when empty", async () => {
-    const user = { count: vi.fn().mockResolvedValue(0), upsert: vi.fn() };
+  it("creates admin and seeds MITRE when empty", async () => {
+    const user = { upsert: vi.fn() };
     const mitreTactic = { count: vi.fn().mockResolvedValue(0), upsert: vi.fn() };
     const mitreTechnique = { upsert: vi.fn() };
     const mitreSubTechnique = { upsert: vi.fn() };
@@ -31,12 +33,29 @@ describe("ensureInitialized", () => {
       create: Record<string, unknown>;
     } | undefined;
     expect(upsertArg?.create).toMatchObject({
-      email: "admin@example.com",
+      email: process.env.INITIAL_ADMIN_EMAIL,
       name: "Admin User",
       role: "ADMIN",
     });
     expect(upsertArg?.update).toMatchObject({ role: "ADMIN" });
 
+    expect(mitreTactic.upsert).toHaveBeenCalled();
+    expect(mitreTechnique.upsert).toHaveBeenCalled();
+    expect(mitreSubTechnique.upsert).toHaveBeenCalled();
+  });
+
+  it("skips admin creation when INITIAL_ADMIN_EMAIL is unset", async () => {
+    delete process.env.INITIAL_ADMIN_EMAIL;
+    const user = { upsert: vi.fn() };
+    const mitreTactic = { count: vi.fn().mockResolvedValue(0), upsert: vi.fn() };
+    const mitreTechnique = { upsert: vi.fn() };
+    const mitreSubTechnique = { upsert: vi.fn() };
+    const db = { user, mitreTactic, mitreTechnique, mitreSubTechnique } as unknown as PrismaClient;
+
+    const { ensureInitialized } = await import("@/server/init/ensure-initialized");
+    await ensureInitialized(db);
+
+    expect(user.upsert).not.toHaveBeenCalled();
     expect(mitreTactic.upsert).toHaveBeenCalled();
     expect(mitreTechnique.upsert).toHaveBeenCalled();
     expect(mitreSubTechnique.upsert).toHaveBeenCalled();

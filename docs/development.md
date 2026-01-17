@@ -34,6 +34,16 @@ docker compose -f deploy/docker/docker-compose.dev.yml down
 docker volume rm docker_dev-postgres-data
 ```
 
+## Troubleshooting
+
+### I changed `INITIAL_ADMIN_EMAIL` or SSO and can’t sign in
+
+If you need to re-bootstrap the initial admin account (for example after changing `INITIAL_ADMIN_EMAIL`), re-run the initializer:
+
+```sh
+npm run init
+```
+
 ### Environment variables
 
 Local development uses the same env variable names as Docker (for example, `AUTH_SECRET`, `AUTH_URL`, `DATABASE_URL`). The local `.env.example` also includes `TEST_DATABASE_URL` for the test runner.
