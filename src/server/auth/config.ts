@@ -2,6 +2,8 @@ import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import type { JWT as NextAuthJWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
+import KeycloakProvider from "next-auth/providers/keycloak";
+import OktaProvider from "next-auth/providers/okta";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type UserRole } from "@prisma/client";
@@ -40,6 +42,7 @@ declare module "@auth/core/adapters" {
 type AugmentedJWT = NextAuthJWT & { role?: UserRole };
 
 const demoModeEnabled = env.ENABLE_DEMO_MODE === "true";
+const oauthProviders = new Set(["google", "keycloak", "okta"]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -189,7 +192,7 @@ export const authConfig = {
           }),
         ]
       : []),
-    // Conditionally register Google provider when env credentials are available.
+    // Conditionally register providers when env credentials are available.
     // Actual enablement is enforced via DB in the signIn callback/UI.
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
@@ -198,6 +201,26 @@ export const authConfig = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             // We trust the locally provisioned accounts and block unknown e-mails in the
             // sign-in callback, so allow Auth.js to link Google users directly by e-mail.
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(process.env.KEYCLOAK_CLIENT_ID && process.env.KEYCLOAK_CLIENT_SECRET && process.env.KEYCLOAK_ISSUER
+      ? [
+          KeycloakProvider({
+            clientId: process.env.KEYCLOAK_CLIENT_ID,
+            clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
+            issuer: process.env.KEYCLOAK_ISSUER,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(process.env.OKTA_CLIENT_ID && process.env.OKTA_CLIENT_SECRET && process.env.OKTA_ISSUER
+      ? [
+          OktaProvider({
+            clientId: process.env.OKTA_CLIENT_ID,
+            clientSecret: process.env.OKTA_CLIENT_SECRET,
+            issuer: process.env.OKTA_ISSUER,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
@@ -227,7 +250,7 @@ export const authConfig = {
         return Boolean(resolved);
       }
 
-      if (provider === "google") {
+      if (oauthProviders.has(provider)) {
         const emailAddr = (user as { email?: string | null } | undefined)?.email?.toLowerCase();
         if (!emailAddr) return false;
         try {

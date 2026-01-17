@@ -26,9 +26,9 @@ Minimum values to edit:
 
 ### Choose authentication mode
 
-RTAP supports SSO or a demo login button.
+RTAP supports SSO or a demo login button. Supported SSO providers today are Google, Keycloak, and Okta. If you need another provider, open an issue and we can add it.
 
-- **SSO (recommended):** configure your provider's details (like Google client ID/secret) using the variable names provided in the .env file.
+- **SSO (recommended):** configure your provider's details (like client ID/secret + issuer when required) using the variable names provided in the .env file.
 - **Demo mode:** set `ENABLE_DEMO_MODE=true`. This exposes a “Sign in as Demo Admin” button and **anyone with access to the sign-in page can log in without an account**. Use only for isolated testing or demos.
 
 For Google SSO, configure the following in the Google Cloud console:
