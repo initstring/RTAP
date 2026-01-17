@@ -29,7 +29,7 @@ Minimum values to edit:
 RTAP supports SSO or a demo login button. Supported SSO providers today are Google, GitHub, GitLab, Keycloak, and Okta. If you need another provider, open an issue and we can add it.
 
 - **SSO (recommended):** configure your provider's details (client ID/secret, plus issuer for Keycloak/Okta) using the variable names provided in the .env file.
-- **Demo mode:** set `ENABLE_DEMO_MODE=true`. This exposes a “Sign in as Demo Admin” button and **anyone with access to the sign-in page can log in without an account**. Use only for isolated testing or demos.
+- **Demo mode:** set `ENABLE_DEMO_MODE=true`. This exposes a “Sign in as Demo Admin” button and **anyone with access to the sign-in page can log in without an account**. Use only for isolated testing or demos. Demo mode is automatically disabled when any SSO provider is configured.
 
 For any SSO provider, configure the following in your identity provider console:
 

@@ -10,12 +10,13 @@ export default async function SignInPage(props: { searchParams?: Promise<{ callb
   }
 
   const { callbackUrl = "/", error } = (await props.searchParams) ?? {};
-  const demoEnabled = env.ENABLE_DEMO_MODE === "true";
   const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
   const githubEnabled = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
   const gitlabEnabled = Boolean(env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET);
   const keycloakEnabled = Boolean(env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER);
   const oktaEnabled = Boolean(env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER);
+  const ssoEnabled = googleEnabled || githubEnabled || gitlabEnabled || keycloakEnabled || oktaEnabled;
+  const demoEnabled = env.ENABLE_DEMO_MODE === "true" && !ssoEnabled;
 
   return (
     <SignInPageClient

@@ -43,7 +43,14 @@ declare module "@auth/core/adapters" {
 // Local extension for JWT to carry role information
 type AugmentedJWT = NextAuthJWT & { role?: UserRole };
 
-const demoModeEnabled = env.ENABLE_DEMO_MODE === "true";
+const ssoProvidersEnabled = Boolean(
+  (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET)
+    || (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET)
+    || (env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET)
+    || (env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER)
+    || (env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER),
+);
+const demoModeEnabled = env.ENABLE_DEMO_MODE === "true" && !ssoProvidersEnabled;
 const oauthProviders = new Set(["google", "github", "gitlab", "keycloak", "okta"]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -196,51 +203,51 @@ export const authConfig = {
       : []),
     // Conditionally register providers when env credentials are available.
     // Actual enablement is enforced via DB in the signIn callback/UI.
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
       ? [
           GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
             // We trust the locally provisioned accounts and block unknown e-mails in the
             // sign-in callback, so allow Auth.js to link Google users directly by e-mail.
             allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+    ...(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
       ? [
           GitHubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+            clientId: env.GITHUB_CLIENT_ID,
+            clientSecret: env.GITHUB_CLIENT_SECRET,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
-    ...(process.env.GITLAB_CLIENT_ID && process.env.GITLAB_CLIENT_SECRET
+    ...(env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET
       ? [
           GitLabProvider({
-            clientId: process.env.GITLAB_CLIENT_ID,
-            clientSecret: process.env.GITLAB_CLIENT_SECRET,
+            clientId: env.GITLAB_CLIENT_ID,
+            clientSecret: env.GITLAB_CLIENT_SECRET,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
-    ...(process.env.KEYCLOAK_CLIENT_ID && process.env.KEYCLOAK_CLIENT_SECRET && process.env.KEYCLOAK_ISSUER
+    ...(env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER
       ? [
           KeycloakProvider({
-            clientId: process.env.KEYCLOAK_CLIENT_ID,
-            clientSecret: process.env.KEYCLOAK_CLIENT_SECRET,
-            issuer: process.env.KEYCLOAK_ISSUER,
+            clientId: env.KEYCLOAK_CLIENT_ID,
+            clientSecret: env.KEYCLOAK_CLIENT_SECRET,
+            issuer: env.KEYCLOAK_ISSUER,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
-    ...(process.env.OKTA_CLIENT_ID && process.env.OKTA_CLIENT_SECRET && process.env.OKTA_ISSUER
+    ...(env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER
       ? [
           OktaProvider({
-            clientId: process.env.OKTA_CLIENT_ID,
-            clientSecret: process.env.OKTA_CLIENT_SECRET,
-            issuer: process.env.OKTA_ISSUER,
+            clientId: env.OKTA_CLIENT_ID,
+            clientSecret: env.OKTA_CLIENT_SECRET,
+            issuer: env.OKTA_ISSUER,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
