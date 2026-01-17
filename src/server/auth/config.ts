@@ -221,7 +221,6 @@ export const authConfig = {
           GitLabProvider({
             clientId: process.env.GITLAB_CLIENT_ID,
             clientSecret: process.env.GITLAB_CLIENT_SECRET,
-            issuer: process.env.GITLAB_ISSUER,
             allowDangerousEmailAccountLinking: true,
           }),
         ]

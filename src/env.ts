@@ -31,7 +31,6 @@ export const env = createEnv({
     // Optional: GitLab OAuth client credentials (registers provider when present)
     GITLAB_CLIENT_ID: z.string().optional(),
     GITLAB_CLIENT_SECRET: z.string().optional(),
-    GITLAB_ISSUER: z.string().optional(),
     // Optional: Keycloak OAuth client credentials (registers provider when present)
     KEYCLOAK_CLIENT_ID: z.string().optional(),
     KEYCLOAK_CLIENT_SECRET: z.string().optional(),
@@ -68,7 +67,6 @@ export const env = createEnv({
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     GITLAB_CLIENT_ID: process.env.GITLAB_CLIENT_ID,
     GITLAB_CLIENT_SECRET: process.env.GITLAB_CLIENT_SECRET,
-    GITLAB_ISSUER: process.env.GITLAB_ISSUER,
     KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
     KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
     KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
