@@ -17,7 +17,7 @@ services:
       - rtap-postgres
     environment:
       NODE_ENV: production
-      PORT: ${PORT}
+      PORT: 3000
       DATABASE_URL: ${DATABASE_URL}
       AUTH_URL: ${AUTH_URL}
       AUTH_SECRET: ${AUTH_SECRET}
@@ -36,11 +36,11 @@ services:
       OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
       OKTA_ISSUER: ${OKTA_ISSUER}
     ports:
-      - "${PORT}:${PORT}"
+      - "${HOST_PORT:-3000}:3000"
     restart: unless-stopped
 
 # If you need TLS, place your own reverse proxy (e.g., Traefik, Caddy, Nginx)
-# in front of rtap-web and forward port 80/443 to ${PORT}.
+# in front of rtap-web and forward port 80/443 to ${HOST_PORT:-3000}.
 
 volumes:
   rtap-postgres-data:
