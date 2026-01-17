@@ -43,13 +43,13 @@ declare module "@auth/core/adapters" {
 // Local extension for JWT to carry role information
 type AugmentedJWT = NextAuthJWT & { role?: UserRole };
 
-const ssoProvidersEnabled = Boolean(
-  (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET)
-    || (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET)
-    || (env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET)
-    || (env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER)
-    || (env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER),
-);
+const ssoProvidersEnabled = [
+  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET,
+  env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET,
+  env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET,
+  env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER,
+  env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER,
+].some(Boolean);
 const demoModeEnabled = env.ENABLE_DEMO_MODE === "true" && !ssoProvidersEnabled;
 const oauthProviders = new Set(["google", "github", "gitlab", "keycloak", "okta"]);
 
