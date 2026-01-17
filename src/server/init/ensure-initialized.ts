@@ -67,3 +67,9 @@ export function ensureInitialized(db: PrismaClient): Promise<void> {
 
   return initPromise;
 }
+
+export function resetInitializationForTests(): void {
+  if (process.env.NODE_ENV === "test") {
+    initPromise = null;
+  }
+}

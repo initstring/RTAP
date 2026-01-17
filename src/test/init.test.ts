@@ -10,10 +10,11 @@ vi.mock("@/lib/mitreStix", () => ({
 }));
 
 describe("ensureInitialized", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    vi.resetModules();
     process.env.INITIAL_ADMIN_EMAIL = "admin@example.com";
+    const { resetInitializationForTests } = await import("@/server/init/ensure-initialized");
+    resetInitializationForTests();
   });
 
   it("creates admin and seeds MITRE when empty", async () => {
