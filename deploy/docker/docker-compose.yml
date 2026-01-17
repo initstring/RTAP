@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: rtap-postgres
     environment:
-      POSTGRES_USER: ${RTAP_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${RTAP_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${RTAP_POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - rtap-postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -17,16 +17,16 @@ services:
       - rtap-postgres
     environment:
       NODE_ENV: production
-      PORT: ${RTAP_PORT}
-      DATABASE_URL: ${RTAP_DATABASE_URL}
-      AUTH_URL: ${RTAP_AUTH_URL}
-      AUTH_SECRET: ${RTAP_AUTH_SECRET}
-      INITIAL_ADMIN_EMAIL: ${RTAP_INITIAL_ADMIN_EMAIL}
-      ENABLE_DEMO_MODE: ${RTAP_ENABLE_DEMO_MODE}
-      GOOGLE_CLIENT_ID: ${RTAP_GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${RTAP_GOOGLE_CLIENT_SECRET}
+      PORT: ${PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_URL: ${AUTH_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL}
+      ENABLE_DEMO_MODE: ${ENABLE_DEMO_MODE}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
-      - "${RTAP_PORT}:${RTAP_PORT}"
+      - "${PORT}:${PORT}"
     restart: unless-stopped
 
 # If you need TLS, place your own reverse proxy (e.g., Traefik, Caddy, Nginx)
