@@ -15,8 +15,8 @@ describe("ensureInitialized", () => {
     delete process.env.INITIAL_ADMIN_EMAIL;
   });
 
-  it("creates admin when no users and seeds MITRE when empty", async () => {
-    const user = { count: vi.fn().mockResolvedValue(0), upsert: vi.fn() };
+  it("creates admin and seeds MITRE when empty", async () => {
+    const user = { upsert: vi.fn() };
     const mitreTactic = { count: vi.fn().mockResolvedValue(0), upsert: vi.fn() };
     const mitreTechnique = { upsert: vi.fn() };
     const mitreSubTechnique = { upsert: vi.fn() };
