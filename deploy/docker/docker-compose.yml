@@ -17,7 +17,6 @@ services:
       - rtap-postgres
     environment:
       NODE_ENV: production
-      PORT: ${PORT}
       DATABASE_URL: ${DATABASE_URL}
       AUTH_URL: ${AUTH_URL}
       AUTH_SECRET: ${AUTH_SECRET}
@@ -25,12 +24,22 @@ services:
       ENABLE_DEMO_MODE: ${ENABLE_DEMO_MODE}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID}
+      GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_ISSUER: ${OKTA_ISSUER}
     ports:
-      - "${PORT}:${PORT}"
+      - "3000:3000"
     restart: unless-stopped
 
 # If you need TLS, place your own reverse proxy (e.g., Traefik, Caddy, Nginx)
-# in front of rtap-web and forward port 80/443 to ${PORT}.
+# in front of rtap-web and forward port 80/443 to 3000.
 
 volumes:
   rtap-postgres-data:
