@@ -27,7 +27,6 @@ describe("Users Router — update/delete", () => {
       email: updateData.email,
       role: updateData.role,
       lastLogin: null,
-      _count: { authenticators: 1 },
     };
     mockDb.user.findFirst.mockResolvedValue(null);
     mockDb.user.update.mockResolvedValue(mockUpdatedUser);
@@ -40,7 +39,6 @@ describe("Users Router — update/delete", () => {
       email: updateData.email,
       role: updateData.role,
       lastLogin: null,
-      passkeyCount: 1,
     });
   });
 
@@ -59,7 +57,6 @@ describe("Users Router — update/delete", () => {
       email: normalizedEmail,
       role: updateData.role,
       lastLogin: null,
-      _count: { authenticators: 0 },
     });
     const ctx = createTestContext(mockDb, UserRole.ADMIN);
     const caller = usersRouter.createCaller(ctx);

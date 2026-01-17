@@ -56,7 +56,5 @@ export function defaultUserSelect() {
     email: true,
     role: true,
     lastLogin: true,
-    _count: { select: { authenticators: true } },
   } as const;
 }
-

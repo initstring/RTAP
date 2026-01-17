@@ -2,8 +2,7 @@ import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import type { JWT as NextAuthJWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
-import Passkey from "next-auth/providers/passkey";
-import type { EmailConfig } from "next-auth/providers/email";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type UserRole } from "@prisma/client";
 
@@ -11,7 +10,6 @@ import { db } from "@/server/db";
 import { auditEvent, logger } from "@/server/logger";
 import { env } from "@/env";
 import { headers } from "next/headers";
-import { LOGIN_LINK_PROVIDER_ID } from "./constants";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -41,19 +39,7 @@ declare module "@auth/core/adapters" {
 // Local extension for JWT to carry role information
 type AugmentedJWT = NextAuthJWT & { role?: UserRole };
 
-const loginLinkProvider: EmailConfig = {
-  id: LOGIN_LINK_PROVIDER_ID,
-  type: "email",
-  name: "One-time Link",
-  maxAge: 60 * 60, // 1 hour
-  async sendVerificationRequest() {
-    // Login links are generated via scripts/admin tooling only.
-    throw new Error("Login link generation is restricted to administrators.");
-  },
-  options: {},
-};
-
-const passkeysEnabled = env.AUTH_PASSKEYS_ENABLED === "true";
+const demoModeEnabled = env.ENABLE_DEMO_MODE === "true";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -147,7 +133,6 @@ async function resolveUserIdentity(user: {
 export const authConfig = {
   adapter: prismaAdapter,
   useSecureCookies: env.AUTH_URL?.startsWith("https://") ?? false,
-  experimental: passkeysEnabled ? { enableWebAuthn: true } : undefined,
   // Route Auth.js logs through our Pino logger for concise, structured output
   logger: {
     error(error) {
@@ -175,8 +160,6 @@ export const authConfig = {
       logger.error(payload, "Auth.js error");
     },
     warn(code) {
-      if (code === "experimental-webauthn") return;
-
       logger.warn({ event: "authjs.warn", code }, "Auth.js warn");
     },
     debug(message, metadata) {
@@ -188,8 +171,24 @@ export const authConfig = {
     },
   },
   providers: [
-    loginLinkProvider,
-    ...(passkeysEnabled ? [Passkey({})] : []),
+    ...(demoModeEnabled
+      ? [
+          CredentialsProvider({
+            id: "demo",
+            name: "Demo Mode",
+            credentials: {},
+            async authorize() {
+              if (!demoModeEnabled) return null;
+              const email = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase() ?? "admin@example.com";
+              const user = await db.user.findUnique({
+                where: { email },
+                select: { id: true, name: true, email: true, role: true },
+              });
+              return user ?? null;
+            },
+          }),
+        ]
+      : []),
     // Conditionally register Google provider when env credentials are available.
     // Actual enablement is enforced via DB in the signIn callback/UI.
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -219,21 +218,9 @@ export const authConfig = {
 
       const provider = account.provider;
 
-      if (provider === LOGIN_LINK_PROVIDER_ID) {
-        const emailAddr = (user as { email?: string | null } | undefined)?.email?.toLowerCase();
-        if (!emailAddr) return false;
-        try {
-          const existing = await db.user.findUnique({ where: { email: emailAddr } });
-          return Boolean(existing);
-        } catch (error) {
-          logger.warn({ event: "auth.login_link_validation_failed", email: emailAddr, error }, "Blocked login-link sign-in due to validation error");
-          return false;
-        }
-      }
-
-      if (provider === "passkey") {
-        if (!passkeysEnabled) {
-          logger.warn({ event: "auth.passkey_disabled" }, "Blocked passkey sign-in because provider is disabled");
+      if (provider === "demo") {
+        if (!demoModeEnabled) {
+          logger.warn({ event: "auth.demo_disabled" }, "Blocked demo sign-in because demo mode is disabled");
           return false;
         }
         const resolved = await resolveUserIdentity(user as { id?: string | null; email?: string | null });

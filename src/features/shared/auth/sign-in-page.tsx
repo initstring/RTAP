@@ -2,20 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn as signInOauth } from "next-auth/react";
-import { signIn as signInPasskey } from "next-auth/webauthn";
+import { signIn } from "next-auth/react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@components/ui";
 
 interface Props {
-  passkeysEnabled: boolean;
   googleEnabled: boolean;
+  demoEnabled: boolean;
   callbackUrl: string;
   initialError?: string;
 }
 
-export default function SignInPageClient({ passkeysEnabled, googleEnabled, callbackUrl, initialError }: Props) {
+export default function SignInPageClient({ googleEnabled, demoEnabled, callbackUrl, initialError }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState<"passkey" | "google" | null>(null);
+  const [loading, setLoading] = useState<"demo" | "google" | null>(null);
   const [error, setError] = useState<string | null>(initialError ?? null);
 
   const toMessage = (err?: string | null) => {
@@ -23,28 +22,24 @@ export default function SignInPageClient({ passkeysEnabled, googleEnabled, callb
     switch (err) {
       case "AccessDenied":
         return "Access denied. Contact an administrator.";
-      case "Verification":
-        return "This login link has expired or was already used.";
+      case "CredentialsSignin":
+        return "Demo sign-in failed. Contact an administrator.";
       default:
         return "Sign-in failed. Please try again.";
     }
   };
 
-  const handlePasskey = async () => {
-    if (!passkeysEnabled) return;
-    setLoading("passkey");
+  const handleDemo = async () => {
+    if (!demoEnabled) return;
+    setLoading("demo");
     setError(null);
     try {
-      const res = await signInPasskey("passkey", { callbackUrl, redirect: false });
-      if (!res) {
-        setError("Passkey sign-in failed. Please try again.");
-      } else if (res.error) {
+      const res = await signIn("demo", { callbackUrl, redirect: false });
+      if (res?.error) {
         setError(toMessage(res.error));
-      } else if (res.ok && res.url) {
+      } else if (res?.url) {
         router.push(res.url);
       }
-    } catch {
-      setError("Passkey sign-in failed. Please try again.");
     } finally {
       setLoading(null);
     }
@@ -54,7 +49,7 @@ export default function SignInPageClient({ passkeysEnabled, googleEnabled, callb
     setLoading("google");
     setError(null);
     try {
-      const res = await signInOauth("google", { callbackUrl, redirect: false });
+      const res = await signIn("google", { callbackUrl, redirect: false });
       if (res?.error) {
         setError(toMessage(res.error));
       } else if (res?.url) {
@@ -65,7 +60,7 @@ export default function SignInPageClient({ passkeysEnabled, googleEnabled, callb
     }
   };
 
-  const nothingEnabled = !googleEnabled && !passkeysEnabled;
+  const nothingEnabled = !googleEnabled && !demoEnabled;
 
   return (
     <div className="min-h-screen grid place-items-center p-6">
@@ -84,18 +79,18 @@ export default function SignInPageClient({ passkeysEnabled, googleEnabled, callb
             </div>
           )}
 
-          {passkeysEnabled && (
+          {demoEnabled && (
             <Button
               variant="glass"
               className="w-full"
-              onClick={handlePasskey}
+              onClick={handleDemo}
               disabled={loading !== null}
             >
-              {loading === "passkey" ? "Connecting…" : "Sign in with Passkey"}
+              {loading === "demo" ? "Signing in…" : "Sign in as Demo Admin"}
             </Button>
           )}
 
-          {googleEnabled && passkeysEnabled && (
+          {googleEnabled && demoEnabled && (
             <div className="relative text-center">
               <div className="h-px bg-[var(--color-border)]" />
               <span className="inline-block px-2 text-xs text-[var(--color-text-muted)] bg-[var(--color-surface)] -mt-2 relative">

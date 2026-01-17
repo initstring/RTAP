@@ -21,16 +21,16 @@ describe("Users Router — read", () => {
   describe("list", () => {
     it("returns all users for admin", async () => {
       const mockUsers = [
-        { id: "1", name: "Admin User", email: "admin@test.com", role: UserRole.ADMIN, lastLogin: null, _count: { authenticators: 1 } },
-        { id: "2", name: "Operator User", email: "operator@test.com", role: UserRole.OPERATOR, lastLogin: null, _count: { authenticators: 0 } },
+        { id: "1", name: "Admin User", email: "admin@test.com", role: UserRole.ADMIN, lastLogin: null },
+        { id: "2", name: "Operator User", email: "operator@test.com", role: UserRole.OPERATOR, lastLogin: null },
       ];
       mockDb.user.findMany.mockResolvedValue(mockUsers);
       const ctx = createTestContext(mockDb, UserRole.ADMIN);
       const caller = usersRouter.createCaller(ctx);
       const result = await caller.list();
       expect(result).toEqual([
-        { id: "1", name: "Admin User", email: "admin@test.com", role: UserRole.ADMIN, lastLogin: null, passkeyCount: 1 },
-        { id: "2", name: "Operator User", email: "operator@test.com", role: UserRole.OPERATOR, lastLogin: null, passkeyCount: 0 },
+        { id: "1", name: "Admin User", email: "admin@test.com", role: UserRole.ADMIN, lastLogin: null },
+        { id: "2", name: "Operator User", email: "operator@test.com", role: UserRole.OPERATOR, lastLogin: null },
       ]);
     });
 
@@ -45,7 +45,7 @@ describe("Users Router — read", () => {
 
   describe("me", () => {
     it("returns current user profile", async () => {
-      const mockUser = { id: "user-123", name: "Test User", email: "test@example.com", role: UserRole.OPERATOR, lastLogin: null, _count: { authenticators: 2 } };
+      const mockUser = { id: "user-123", name: "Test User", email: "test@example.com", role: UserRole.OPERATOR, lastLogin: null };
       mockDb.user.findUnique.mockResolvedValue(mockUser);
       const ctx = createTestContext(mockDb, UserRole.OPERATOR, "user-123");
       const caller = usersRouter.createCaller(ctx);
@@ -56,7 +56,6 @@ describe("Users Router — read", () => {
         email: "test@example.com",
         role: UserRole.OPERATOR,
         lastLogin: null,
-        passkeyCount: 2,
       });
     });
   });

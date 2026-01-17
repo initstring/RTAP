@@ -41,7 +41,7 @@ Initially based on the T3 Stack - Next.js, tRPC, Prisma, TypeScript. Type-safe A
 
 Local development runs the Next.js dev server against a local PostgreSQL container. Production workloads also use Docker (web + Postgres) behind your own reverse proxy.
 
-Authentication is all passwordless using NextAuth - with an option for passkeys and/or OAuth providers (initial support includes Google SSO).
+Authentication is passwordless and SSO-first using NextAuth (currently Google OAuth). For development and trials you can enable a demo admin sign-in button via `ENABLE_DEMO_MODE`.
 
 ## Licensing
 

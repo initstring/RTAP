@@ -8,25 +8,24 @@ const lastLoginSchema = z
   .nullable()
   .optional();
 
-export const userWithPasskeySchema = z.object({
+export const userProfileSchema = z.object({
   id: z.string(),
   name: z.string().nullable().optional(),
   email: z.string().email(),
   role: userRoleSchema,
   lastLogin: lastLoginSchema,
-  passkeyCount: z.number().int().min(0),
 });
 
-export type UserWithPasskey = z.infer<typeof userWithPasskeySchema>;
+export type UserProfile = z.infer<typeof userProfileSchema>;
 
-const userListSchema = z.array(userWithPasskeySchema);
+const userListSchema = z.array(userProfileSchema);
 
-export function parseUserWithPasskey(value: unknown): UserWithPasskey | null {
-  const result = userWithPasskeySchema.safeParse(value);
+export function parseUserProfile(value: unknown): UserProfile | null {
+  const result = userProfileSchema.safeParse(value);
   return result.success ? result.data : null;
 }
 
-export function parseUserWithPasskeyList(value: unknown): UserWithPasskey[] {
+export function parseUserProfileList(value: unknown): UserProfile[] {
   const result = userListSchema.safeParse(value);
   return result.success ? result.data : [];
 }
