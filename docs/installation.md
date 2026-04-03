@@ -1,67 +1,66 @@
 # Installation
 
-Follow these instructions to set up Red Team Assessment Platform (RTAP) for production or local testing purposes. This uses pre-built Docker containers.
+This guide is for running RTAP with pre-built Docker containers (production or quick local trials).
 
-For development environments, you'll probably instead want to run a local npm dev server - not a pre-built container. Additional information is available [here](./development.md).
+If you are developing on the codebase, use the local dev workflow instead: [Local Development](./development.md).
 
 ## Docker Installation
 
-The provided `deploy/docker/docker-compose.yml` file does not include a reverse proxy; configure your own with TLS.
+The provided `docker-compose.yml` file does not include a reverse proxy. For production usage, you'll want to add your own reverse proxy (Caddy, Traefik, nginx, etc) and configure TLS.
+
+### Configure the Docker `.env` file
+
+From the repository root:
 
 ```sh
 cd deploy/docker
-
-# Copy example env file and replace secrets
-cp .env.example .env
-
-docker compose up -d
-
-# Optionally - seed demo taxonomy/operation data (FOR DEMO PURPOSES ONLY)
-docker exec rtap-web npm run seed:demo
-
-# Optional: enable demo admin login for trials (see Authentication below)
+cp .env.example-prod .env
 ```
 
-## Authentication
+Minimum values to edit:
 
-### How it Works
+- `AUTH_SECRET` (required, at least 32 characters)
+- `INITIAL_ADMIN_EMAIL` (your admin account)
+- `POSTGRES_PASSWORD` (database password)
+- `AUTH_URL` (URL the app will be accessed on)
 
-Authentication is SSO-only, with an optional demo-mode button for trials.
+### Choose authentication mode
 
-Currently, only Google SSO is enabled. However, [NextAuth supports tons of providers](https://next-auth.js.org/v3/configuration/providers#oauth-providers). Open an issue and I will add providers for you.
+RTAP supports SSO or a demo login button. Supported SSO providers today are Google, GitHub, GitLab, Keycloak, and Okta. If you need another provider, open an issue and we can add it.
 
-**Admin bootstrap:**
+- **SSO (recommended):** configure your provider's details (client ID/secret, plus issuer for Keycloak/Okta) using the variable names provided in the .env file.
+- **Demo mode:** set `ENABLE_DEMO_MODE=true`. This exposes a “Sign in as Demo Admin” button and **anyone with access to the sign-in page can log in without an account**. Use only for isolated testing or demos. Demo mode is automatically disabled when any SSO provider is configured.
 
-- On first run, the application creates an admin account using `INITIAL_ADMIN_EMAIL` from your `.env`.
-- If using SSO, sign in with the matching account and it will just work.
-- If using demo mode, click "Sign in as Demo Admin" (requires `ENABLE_DEMO_MODE=true`).
-
-**Ongoing user management:**
-
-- Once logged in as admin, you can create additional users.
-- SSO users: log in with the matching email.
-
-Accounts must be created inside the platform; SSO logins for unknown emails will be rejected.
-
-### Configuration Info
-
-Authentication options are configured in your `.env` file. The names are slightly different depending on whether you are doing local development or docker compose - the correct values are provided in the appropriate `.env-example` files.
-
-```
-# Demo mode: expose a demo admin login button on the sign-in page
-ENABLE_DEMO_MODE=false
-
-# Configuring the following values will enable Google SSO
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-```
-
-For Google, configure the following in the Google Cloud console:
+For any SSO provider, configure the following in your identity provider console:
 
 - Authorized JavaScript origins: matches `AUTH_URL` from `.env`.
-- Authorized redirect URIs: `AUTH_URL` + `/api/auth/callback/google`.
+- Authorized redirect URIs: `AUTH_URL` + `/api/auth/callback/<provider>` (for example, `/api/auth/callback/github`).
+
+SSO will NOT auto-create users. They must be added first inside the platform, and then SSO with matching emails will just work. For the first login to the platform, ensure `INTIAL_ADMIN_EMAIL` matches whatever SSO account you want to use to log in. One logged in, you can manually add addition users who will then be permitted to log in via SSO with matching email addresses.
+
+### Start the containers
+
+From the repository root:
+
+```sh
+cd deploy/docker
+docker compose up -d
+
+# Optional - seed demo taxonomy/operation data (FOR DEMO PURPOSES ONLY)
+docker exec rtap-web npm run seed:demo
+```
 
 ## Logging
 
 - Server logs emit to stdout/stderr (structured JSON in production, pretty in development). Rely on Docker and the host OS for collection and rotation.
 - Log level defaults: `debug` in development, `info` in production. Override with `LOG_LEVEL`.
+
+## Troubleshooting
+
+### I changed `INITIAL_ADMIN_EMAIL` or SSO and can’t sign in
+
+The bootstrap admin account is created during initialization. If you need to re-bootstrap it (for example after changing `INITIAL_ADMIN_EMAIL`), re-run the init script inside the web container:
+
+```sh
+docker exec rtap-web npm run init
+```

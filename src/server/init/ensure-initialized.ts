@@ -14,11 +14,9 @@ export function ensureInitialized(db: PrismaClient): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    // 1) Ensure admin exists (if no users at all)
-    const userCount = await db.user.count();
-    if (userCount === 0) {
-      const defaultEmail = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase() ?? "admin@example.com";
-
+    // 1) Ensure the bootstrap admin exists (every init, no auto-provisioning outside env)
+    const defaultEmail = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();
+    if (defaultEmail) {
       await db.user.upsert({
         where: { email: defaultEmail },
         update: { role: UserRole.ADMIN },
@@ -68,4 +66,10 @@ export function ensureInitialized(db: PrismaClient): Promise<void> {
   })();
 
   return initPromise;
+}
+
+export function resetInitializationForTests(): void {
+  if (process.env.NODE_ENV === "test") {
+    initPromise = null;
+  }
 }

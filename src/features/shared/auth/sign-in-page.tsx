@@ -7,14 +7,37 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from "@components/ui
 
 interface Props {
   googleEnabled: boolean;
+  githubEnabled: boolean;
+  gitlabEnabled: boolean;
+  keycloakEnabled: boolean;
+  oktaEnabled: boolean;
   demoEnabled: boolean;
   callbackUrl: string;
   initialError?: string;
 }
 
-export default function SignInPageClient({ googleEnabled, demoEnabled, callbackUrl, initialError }: Props) {
+type OAuthProviderId = "google" | "github" | "gitlab" | "keycloak" | "okta";
+
+const oauthOptions: Array<{ id: OAuthProviderId; label: string }> = [
+  { id: "google", label: "Continue with Google" },
+  { id: "github", label: "Continue with GitHub" },
+  { id: "gitlab", label: "Continue with GitLab" },
+  { id: "keycloak", label: "Continue with Keycloak" },
+  { id: "okta", label: "Continue with Okta" },
+];
+
+export default function SignInPageClient({
+  googleEnabled,
+  githubEnabled,
+  gitlabEnabled,
+  keycloakEnabled,
+  oktaEnabled,
+  demoEnabled,
+  callbackUrl,
+  initialError,
+}: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState<"demo" | "google" | null>(null);
+  const [loading, setLoading] = useState<"demo" | OAuthProviderId | null>(null);
   const [error, setError] = useState<string | null>(initialError ?? null);
 
   const toMessage = (err?: string | null) => {
@@ -45,11 +68,11 @@ export default function SignInPageClient({ googleEnabled, demoEnabled, callbackU
     }
   };
 
-  const handleGoogle = async () => {
-    setLoading("google");
+  const handleOAuth = async (provider: OAuthProviderId) => {
+    setLoading(provider);
     setError(null);
     try {
-      const res = await signIn("google", { callbackUrl, redirect: false });
+      const res = await signIn(provider, { callbackUrl, redirect: false });
       if (res?.error) {
         setError(toMessage(res.error));
       } else if (res?.url) {
@@ -60,7 +83,17 @@ export default function SignInPageClient({ googleEnabled, demoEnabled, callbackU
     }
   };
 
-  const nothingEnabled = !googleEnabled && !demoEnabled;
+  const oauthEnabled: Record<OAuthProviderId, boolean> = {
+    google: googleEnabled,
+    github: githubEnabled,
+    gitlab: gitlabEnabled,
+    keycloak: keycloakEnabled,
+    okta: oktaEnabled,
+  };
+
+  const enabledOauthOptions = oauthOptions.filter((option) => oauthEnabled[option.id]);
+  const nothingEnabled = enabledOauthOptions.length === 0 && !demoEnabled;
+  const showSeparator = demoEnabled && enabledOauthOptions.length > 0;
 
   return (
     <div className="min-h-screen grid place-items-center p-6">
@@ -90,7 +123,7 @@ export default function SignInPageClient({ googleEnabled, demoEnabled, callbackU
             </Button>
           )}
 
-          {googleEnabled && demoEnabled && (
+          {showSeparator && (
             <div className="relative text-center">
               <div className="h-px bg-[var(--color-border)]" />
               <span className="inline-block px-2 text-xs text-[var(--color-text-muted)] bg-[var(--color-surface)] -mt-2 relative">
@@ -99,11 +132,17 @@ export default function SignInPageClient({ googleEnabled, demoEnabled, callbackU
             </div>
           )}
 
-          {googleEnabled && (
-            <Button variant="glass" className="w-full" onClick={handleGoogle} disabled={loading !== null}>
-              {loading === "google" ? "Redirecting…" : "Continue with Google"}
+          {enabledOauthOptions.map((option) => (
+            <Button
+              key={option.id}
+              variant="glass"
+              className="w-full"
+              onClick={() => void handleOAuth(option.id)}
+              disabled={loading !== null}
+            >
+              {loading === option.id ? "Redirecting…" : option.label}
             </Button>
-          )}
+          ))}
 
           {nothingEnabled && (
             <div className="text-sm text-[var(--color-text-secondary)]">

@@ -1,7 +1,11 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import type { JWT as NextAuthJWT } from "next-auth/jwt";
+import GitHubProvider from "next-auth/providers/github";
+import GitLabProvider from "next-auth/providers/gitlab";
 import GoogleProvider from "next-auth/providers/google";
+import KeycloakProvider from "next-auth/providers/keycloak";
+import OktaProvider from "next-auth/providers/okta";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type UserRole } from "@prisma/client";
@@ -39,7 +43,15 @@ declare module "@auth/core/adapters" {
 // Local extension for JWT to carry role information
 type AugmentedJWT = NextAuthJWT & { role?: UserRole };
 
-const demoModeEnabled = env.ENABLE_DEMO_MODE === "true";
+const ssoProvidersEnabled = [
+  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET,
+  env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET,
+  env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET,
+  env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER,
+  env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER,
+].some(Boolean);
+const demoModeEnabled = env.ENABLE_DEMO_MODE === "true" && !ssoProvidersEnabled;
+const oauthProviders = new Set(["google", "github", "gitlab", "keycloak", "okta"]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -189,15 +201,53 @@ export const authConfig = {
           }),
         ]
       : []),
-    // Conditionally register Google provider when env credentials are available.
+    // Conditionally register providers when env credentials are available.
     // Actual enablement is enforced via DB in the signIn callback/UI.
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
       ? [
           GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
             // We trust the locally provisioned accounts and block unknown e-mails in the
             // sign-in callback, so allow Auth.js to link Google users directly by e-mail.
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
+      ? [
+          GitHubProvider({
+            clientId: env.GITHUB_CLIENT_ID,
+            clientSecret: env.GITHUB_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(env.GITLAB_CLIENT_ID && env.GITLAB_CLIENT_SECRET
+      ? [
+          GitLabProvider({
+            clientId: env.GITLAB_CLIENT_ID,
+            clientSecret: env.GITLAB_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET && env.KEYCLOAK_ISSUER
+      ? [
+          KeycloakProvider({
+            clientId: env.KEYCLOAK_CLIENT_ID,
+            clientSecret: env.KEYCLOAK_CLIENT_SECRET,
+            issuer: env.KEYCLOAK_ISSUER,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(env.OKTA_CLIENT_ID && env.OKTA_CLIENT_SECRET && env.OKTA_ISSUER
+      ? [
+          OktaProvider({
+            clientId: env.OKTA_CLIENT_ID,
+            clientSecret: env.OKTA_CLIENT_SECRET,
+            issuer: env.OKTA_ISSUER,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
@@ -227,7 +277,7 @@ export const authConfig = {
         return Boolean(resolved);
       }
 
-      if (provider === "google") {
+      if (oauthProviders.has(provider)) {
         const emailAddr = (user as { email?: string | null } | undefined)?.email?.toLowerCase();
         if (!emailAddr) return false;
         try {
