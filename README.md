@@ -1,6 +1,6 @@
 # Red Team Assessment Platform (RTAP)
 
-_This is a personal hobby project, with no commitments and no promises. It is built mostly with OpenAI's GPT5-Codex, as an experiment in creating a full application with AI agents._
+_Note: This project is no longer actively maintained. I've moved into a new role outside of red teaming and won't be continuing development. The repository is archived (read-only). You're welcome to fork it or use the published packages as-is._
 
 Red Team Assessment Platform (RTAP) is built for internal Red Teams to plan and analyze their operations. The features and functionality are designed with their specific needs in mind, such as:
 
